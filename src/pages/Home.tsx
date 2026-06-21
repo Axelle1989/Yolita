@@ -177,7 +177,7 @@ export default function Home() {
           </div>
 
           {/* Interactive Centerpiece Mockup (Stylized Pink Yogurt Jar) */}
-          <div className="lg:col-span-5 relative h-[450px] flex items-center justify-center">
+          <div className="lg:col-span-5 relative h-[320px] sm:h-[400px] lg:h-[450px] flex items-center justify-center mt-8 lg:mt-0">
             
             {/* Soft pink ambient circles */}
             <div className="absolute w-72 h-72 bg-primary/30 rounded-full blur-[60px] animate-pulse"></div>
@@ -188,7 +188,7 @@ export default function Home() {
               initial={{ scale: 0.8, opacity: 0, rotate: -5 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 80 }}
-              className="relative w-72 h-[340px] bg-white rounded-[60px] shadow-[0_20px_60px_rgba(212,121,143,0.15)] border-[8px] border-primary-light p-6 flex flex-col justify-between items-center text-center overflow-hidden"
+              className="relative w-60 h-[280px] sm:w-72 sm:h-[340px] bg-white rounded-[60px] shadow-[0_20px_60px_rgba(212,121,143,0.15)] border-[8px] border-primary-light p-6 flex flex-col justify-between items-center text-center overflow-hidden"
             >
               {/* Top soft lid accent */}
               <div className="absolute top-0 left-0 right-0 h-4 bg-primary rounded-t-[40px]"></div>
@@ -285,8 +285,8 @@ export default function Home() {
                   className="rounded-[40px] overflow-hidden aspect-square shadow-lg border-4 border-accent/20"
                 >
                   <img 
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400" 
-                    alt="Jeune Béninois rayonnant" 
+                    src="/images/yolita-pots-bocaux.jpeg" 
+                    alt="Pots de yaourt Yolita en bocaux" 
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
@@ -661,10 +661,25 @@ export default function Home() {
             🌸
           </div>
           <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 uppercase mb-6 leading-tight">
-            Yolita — Le yaourt qui te veut du bien
+            Notre Histoire
           </h2>
-          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-            Née d'une envie de retrouver des yaourts authentiques sans fioritures superflues, Yolita utilise du bon lait de fermes rigoureusement sélectionnées. Nous y ajoutons de vraies purées de fruits fraichement préparées par nos soins, sans ajouter un seul gramme de sucre blanc raffiné. C'est l'histoire d'un retour au vrai, au gourmand, et au sourire pour tous, petits et grands !
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
+            Yolita est née d'une passion toute simple : mon amour pour le yaourt.
+          </p>
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
+            Depuis toujours, j'ai aimé le yaourt, mais celui qui m'a vraiment marquée est celui que préparait ma mère. Contrairement à beaucoup de yaourts que l'on trouve dans le commerce, souvent très liquides et parfois trop sucrés, le sien était naturellement doux, onctueux et généreux. Chaque gorgée avait le goût du fait maison, de la qualité et du savoir-faire.
+          </p>
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
+            En grandissant, j'ai réalisé que beaucoup de personnes recherchaient cette même authenticité : un yaourt plus épais, plus gourmand, préparé avec soin et sans excès de sucre. C'est cette envie qui a donné naissance à Yolita.
+          </p>
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
+            Mais je voulais aller encore plus loin. J'aime créer, expérimenter et découvrir de nouvelles saveurs. L'idée d'intégrer des fruits est venue naturellement. Les fruits apportent de la fraîcheur, de la couleur et permettent à chacun de vivre une expérience unique.
+          </p>
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
+            Chez Yolita, nous croyons que chaque personne a ses propres goûts. C'est pourquoi nous proposons la possibilité de composer son yaourt selon ses envies, en choisissant les saveurs et les fruits qui lui correspondent le mieux.
+          </p>
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-10 leading-relaxed text-left">
+            Yolita, c'est donc bien plus qu'un simple yaourt : c'est le mélange d'un souvenir d'enfance, d'une passion pour les saveurs authentiques et d'une envie de laisser chaque client créer son propre moment de plaisir.
           </p>
           <Link
             to="/produits"
