@@ -4,6 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 
 export interface Customer {
   name: string;
@@ -11,24 +12,39 @@ export interface Customer {
   phone: string;
   address?: string;
   dateCreated: string;
+  emailConfirmed: boolean;
+}
+
+interface AuthResult {
+  success: boolean;
+  error?: string;
+  needsEmailConfirmation?: boolean;
 }
 
 interface UserContextType {
   customer: Customer | null;
-  registerCustomer: (name: string, email: string, phone: string, address?: string) => { success: boolean; error?: string };
-  loginCustomer: (email: string, phone: string) => { success: boolean; error?: string };
-  logoutCustomer: () => void;
-  updateCustomerAddress: (address: string) => void;
+  loading: boolean;
+  registerCustomer: (
+    name: string,
+    email: string,
+    phone: string,
+    password: string,
+    address?: string
+  ) => Promise<AuthResult>;
+  loginCustomer: (email: string, password: string) => Promise<AuthResult>;
+  resendConfirmationEmail: (email: string) => Promise<AuthResult>;
+  logoutCustomer: () => Promise<void>;
+  updateCustomerAddress: (address: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function validateBeninPhone(phone: string): { isValid: boolean; message: string; formatted: string } {
-  const digitsOnly = phone.replace(/[^0-9+]/g, ''); // keep numbers and optional +
+  const digitsOnly = phone.replace(/[^0-9+]/g, '');
   let rawDigits = digitsOnly;
-  
+
   if (digitsOnly.startsWith('+229')) {
-    rawDigits = digitsOnly.slice(4); // Remove prefix
+    rawDigits = digitsOnly.slice(4);
     if (!rawDigits.startsWith('01')) {
       return {
         isValid: false,
@@ -55,7 +71,6 @@ export function validateBeninPhone(phone: string): { isValid: boolean; message: 
     }
   }
 
-  // The remaining digits (or the phone if no 229 prefix) should match the 10-digit plan starting with 01.
   if (rawDigits.length !== 10) {
     return {
       isValid: false,
@@ -64,8 +79,7 @@ export function validateBeninPhone(phone: string): { isValid: boolean; message: 
     };
   }
 
-  // Format it nicely for Benin: 01 XX XX XX XX
-  const part1 = rawDigits.slice(0, 2); // 01
+  const part1 = rawDigits.slice(0, 2);
   const part2 = rawDigits.slice(2, 4);
   const part3 = rawDigits.slice(4, 6);
   const part4 = rawDigits.slice(6, 8);
@@ -79,106 +93,164 @@ export function validateBeninPhone(phone: string): { isValid: boolean; message: 
   };
 }
 
+function mapSupabaseError(message: string): string {
+  if (message.includes('Invalid login credentials')) {
+    return "Email ou mot de passe incorrect.";
+  }
+  if (message.includes('Email not confirmed')) {
+    return "Votre email n'est pas encore confirmé. Vérifiez votre boîte mail (et vos spams) pour le lien de confirmation.";
+  }
+  if (message.includes('User already registered') || message.includes('already registered')) {
+    return "Cette adresse email est déjà enregistrée. Connectez-vous plutôt !";
+  }
+  if (message.includes('Password should be at least')) {
+    return "Le mot de passe doit contenir au moins 6 caractères.";
+  }
+  return message;
+}
+
+function buildCustomerFromUser(user: any): Customer {
+  const meta = user.user_metadata || {};
+  return {
+    name: meta.name || '',
+    email: user.email || '',
+    phone: meta.phone || '',
+    address: meta.address || '',
+    dateCreated: user.created_at || new Date().toISOString(),
+    emailConfirmed: !!user.email_confirmed_at
+  };
+}
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load logged in state on mount
   useEffect(() => {
-    const saved = localStorage.getItem('yolita_logged_customer');
-    if (saved) {
-      try {
-        setCustomer(JSON.parse(saved));
-      } catch (e) {
-        localStorage.removeItem('yolita_logged_customer');
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setCustomer(buildCustomerFromUser(data.session.user));
       }
-    }
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setCustomer(buildCustomerFromUser(session.user));
+      } else {
+        setCustomer(null);
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  const registerCustomer = (name: string, email: string, phone: string, address?: string) => {
-    if (!name.trim() || !email.trim() || !phone.trim()) {
+  const registerCustomer = async (
+    name: string,
+    email: string,
+    phone: string,
+    password: string,
+    address?: string
+  ): Promise<AuthResult> => {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       return { success: false, error: "Veuillez remplir tous les champs obligatoires." };
     }
 
-    // Benin phone rule: first digit must start with 01
-    const validation = validateBeninPhone(phone);
-    if (!validation.isValid) {
-      return { success: false, error: validation.message };
+    const phoneValidation = validateBeninPhone(phone);
+    if (!phoneValidation.isValid) {
+      return { success: false, error: phoneValidation.message };
     }
 
-    const customersList: Customer[] = JSON.parse(localStorage.getItem('yolita_registered_customers') || '[]');
-    
-    // Check if email already registered
-    const exists = customersList.find((c) => c.email.toLowerCase() === email.trim().toLowerCase());
-    if (exists) {
-      return { success: false, error: "Cette adresse email est déjà enregistrée. Connectez-vous plutôt !" };
+    if (password.length < 6) {
+      return { success: false, error: "Le mot de passe doit contenir au moins 6 caractères." };
     }
 
-    const newCustomer: Customer = {
-      name: name.trim(),
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
-      phone: validation.formatted,
-      address: address?.trim() || '',
-      dateCreated: new Date().toISOString()
-    };
+      password,
+      options: {
+        data: {
+          name: name.trim(),
+          phone: phoneValidation.formatted,
+          address: address?.trim() || ''
+        }
+      }
+    });
 
-    // Save user list and session
-    localStorage.setItem('yolita_registered_customers', JSON.stringify([...customersList, newCustomer]));
-    localStorage.setItem('yolita_logged_customer', JSON.stringify(newCustomer));
-    setCustomer(newCustomer);
+    if (error) {
+      return { success: false, error: mapSupabaseError(error.message) };
+    }
+
+    const needsConfirmation = !data.session;
+
+    if (data.user && data.session) {
+      setCustomer(buildCustomerFromUser(data.user));
+    }
+
+    return { success: true, needsEmailConfirmation: needsConfirmation };
+  };
+
+  const loginCustomer = async (email: string, password: string): Promise<AuthResult> => {
+    if (!email.trim() || !password.trim()) {
+      return { success: false, error: "Veuillez saisir votre email et votre mot de passe." };
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password
+    });
+
+    if (error) {
+      const needsEmailConfirmation = error.message.includes('Email not confirmed');
+      return { success: false, error: mapSupabaseError(error.message), needsEmailConfirmation };
+    }
+
+    if (data.user) {
+      setCustomer(buildCustomerFromUser(data.user));
+    }
 
     return { success: true };
   };
 
-  const loginCustomer = (email: string, phone: string) => {
-    if (!email.trim() || !phone.trim()) {
-      return { success: false, error: "Veuillez saisir votre email et votre numéro de téléphone pour vous connecter." };
+  const resendConfirmationEmail = async (email: string): Promise<AuthResult> => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim().toLowerCase()
+    });
+    if (error) {
+      return { success: false, error: mapSupabaseError(error.message) };
     }
-
-    const customersList: Customer[] = JSON.parse(localStorage.getItem('yolita_registered_customers') || '[]');
-    const cleanEmail = email.trim().toLowerCase();
-    
-    // Support loose phone validation matches
-    const validation = validateBeninPhone(phone);
-    if (!validation.isValid) {
-      return { success: false, error: validation.message };
-    }
-
-    const found = customersList.find(
-      (c) => c.email.toLowerCase() === cleanEmail
-    );
-
-    if (!found) {
-      return { 
-        success: false, 
-        error: "Aucun compte client trouvé avec cet email. Veuillez créer un compte (S'inscrire) !" 
-      };
-    }
-
-    // Connect user
-    localStorage.setItem('yolita_logged_customer', JSON.stringify(found));
-    setCustomer(found);
     return { success: true };
   };
 
-  const logoutCustomer = () => {
-    localStorage.removeItem('yolita_logged_customer');
+  const logoutCustomer = async () => {
+    await supabase.auth.signOut();
     setCustomer(null);
   };
 
-  const updateCustomerAddress = (address: string) => {
+  const updateCustomerAddress = async (address: string) => {
     if (!customer) return;
-    const updated = { ...customer, address };
-    setCustomer(updated);
-    localStorage.setItem('yolita_logged_customer', JSON.stringify(updated));
-
-    // Also update in registered list
-    const customersList: Customer[] = JSON.parse(localStorage.getItem('yolita_registered_customers') || '[]');
-    const updatedList = customersList.map((c) => c.email === customer.email ? { ...c, address } : c);
-    localStorage.setItem('yolita_registered_customers', JSON.stringify(updatedList));
+    const { data, error } = await supabase.auth.updateUser({
+      data: { address }
+    });
+    if (!error && data.user) {
+      setCustomer(buildCustomerFromUser(data.user));
+    }
   };
 
   return (
-    <UserContext.Provider value={{ customer, registerCustomer, loginCustomer, logoutCustomer, updateCustomerAddress }}>
+    <UserContext.Provider
+      value={{
+        customer,
+        loading,
+        registerCustomer,
+        loginCustomer,
+        resendConfirmationEmail,
+        logoutCustomer,
+        updateCustomerAddress
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

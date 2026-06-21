@@ -12,17 +12,19 @@ import {
   Mail, 
   Phone, 
   MapPin, 
+  Lock,
   LogIn, 
   Sparkles, 
   CheckCircle2, 
   AlertCircle, 
   ArrowRight,
   ShieldCheck,
-  ShoppingBag
+  ShoppingBag,
+  MailCheck
 } from 'lucide-react';
 
 export default function Connexion() {
-  const { customer, registerCustomer, loginCustomer } = useUser();
+  const { customer, registerCustomer, loginCustomer, resendConfirmationEmail } = useUser();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/';
@@ -34,12 +36,17 @@ export default function Connexion() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [address, setAddress] = useState('');
   
   // Custom states for messages
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [phoneHelp, setPhoneHelp] = useState<{ isValid?: boolean; message?: string }>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState<string | null>(null);
+  const [needsConfirmationLogin, setNeedsConfirmationLogin] = useState(false);
+  const [resending, setResending] = useState(false);
 
   // Dynamic phone validation live check
   const handlePhoneChange = (val: string) => {
@@ -52,45 +59,60 @@ export default function Connexion() {
     setPhoneHelp({ isValid: res.isValid, message: res.message });
   };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
 
-    if (!name.trim() || !email.trim() || !phone.trim()) {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       setErrorMsg("Veuillez renseigner tous les champs obligatoires (*).");
       return;
     }
 
-    // Explicit phone validation
     const phoneRes = validateBeninPhone(phone);
     if (!phoneRes.isValid) {
       setErrorMsg(phoneRes.message);
       return;
     }
 
-    const res = registerCustomer(name, email, phone, address);
+    if (password.length < 6) {
+      setErrorMsg("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+
+    setSubmitting(true);
+    const res = await registerCustomer(name, email, phone, password, address);
+    setSubmitting(false);
+
     if (res.success) {
-      setSuccessMsg("Votre compte client Yolita a été créé avec succès ! Bienvenue ! 🎉");
-      setTimeout(() => {
-        navigate(redirectPath);
-      }, 1500);
+      if (res.needsEmailConfirmation) {
+        setAwaitingConfirmation(email.trim().toLowerCase());
+      } else {
+        setSuccessMsg("Votre compte client Yolita a été créé avec succès ! Bienvenue ! 🎉");
+        setTimeout(() => {
+          navigate(redirectPath);
+        }, 1500);
+      }
     } else {
       setErrorMsg(res.error || "Une erreur est survenue lors de l'enregistrement.");
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
+    setNeedsConfirmationLogin(false);
 
-    if (!email.trim() || !phone.trim()) {
-      setErrorMsg("Veuillez renseigner votre email et votre téléphone.");
+    if (!email.trim() || !password.trim()) {
+      setErrorMsg("Veuillez renseigner votre email et votre mot de passe.");
       return;
     }
 
-    const res = loginCustomer(email, phone);
+    setSubmitting(true);
+    const res = await loginCustomer(email, password);
+    setSubmitting(false);
+
     if (res.success) {
       setSuccessMsg("Ravi de vous revoir ! Connexion réussie... 🥛");
       setTimeout(() => {
@@ -98,8 +120,80 @@ export default function Connexion() {
       }, 1500);
     } else {
       setErrorMsg(res.error || "Une erreur est survenue lors de la connexion.");
+      if (res.needsEmailConfirmation) {
+        setNeedsConfirmationLogin(true);
+      }
     }
   };
+
+  const handleResend = async (targetEmail: string) => {
+    setResending(true);
+    const res = await resendConfirmationEmail(targetEmail);
+    setResending(false);
+    if (res.success) {
+      setSuccessMsg("Email de confirmation renvoyé ! Vérifiez votre boîte mail.");
+    } else {
+      setErrorMsg(res.error || "Impossible de renvoyer l'email pour le moment.");
+    }
+  };
+
+  // Screen shown right after signup when email confirmation is required
+  if (awaitingConfirmation) {
+    return (
+      <div className="pt-36 pb-24 bg-[#FAFAF8] min-h-screen flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full bg-white rounded-[36px] p-8 md:p-10 border border-gray-100 shadow-xl text-center"
+        >
+          <div className="w-16 h-16 bg-[#F0F7F5] rounded-full flex items-center justify-center mx-auto mb-6 text-2xl border border-emerald-100">
+            <MailCheck className="w-7 h-7 text-[#1E3F37]" />
+          </div>
+          <span className="text-[10px] font-black uppercase text-accent bg-accent/15 px-3 py-1 rounded-md border border-accent/20">
+            Dernière étape
+          </span>
+          <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mt-4">
+            Confirmez votre email
+          </h2>
+          <p className="text-sm text-gray-500 font-semibold mt-3 leading-relaxed">
+            Nous avons envoyé un lien de confirmation à <strong className="text-gray-800">{awaitingConfirmation}</strong>. Cliquez sur ce lien pour activer votre compte Yolita, puis revenez vous connecter.
+          </p>
+
+          {successMsg && (
+            <p className="mt-4 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-150 rounded-xl p-3">
+              {successMsg}
+            </p>
+          )}
+          {errorMsg && (
+            <p className="mt-4 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3">
+              {errorMsg}
+            </p>
+          )}
+
+          <div className="mt-8 space-y-3">
+            <button
+              onClick={() => handleResend(awaitingConfirmation)}
+              disabled={resending}
+              className="w-full bg-[#1E3F37] cursor-pointer text-white py-4 px-6 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[#1E3F37]/90 transition-all shadow-md disabled:opacity-60"
+            >
+              {resending ? 'Envoi...' : "Renvoyer l'email de confirmation"}
+            </button>
+            <button
+              onClick={() => {
+                setAwaitingConfirmation(null);
+                setActiveForm('login');
+                setErrorMsg('');
+                setSuccessMsg('');
+              }}
+              className="w-full bg-gray-50 cursor-pointer text-gray-500 py-3 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-100 transition-all"
+            >
+              J'ai confirmé, me connecter
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   // If customer already logged in, show elegant session info
   if (customer) {
@@ -305,6 +399,25 @@ export default function Connexion() {
                   )}
                 </div>
 
+                {/* Mot de passe */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Mot de passe *</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
+                      <Lock className="w-4 h-4" />
+                    </span>
+                    <input 
+                      type="password" 
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="6 caractères minimum"
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30 focus:border-[#1E3F37] transition-all"
+                    />
+                  </div>
+                </div>
+
                 {/* Adresse par défaut (Facultative) */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Adresse de Livraison (Optionnelle)</label>
@@ -324,9 +437,10 @@ export default function Connexion() {
 
                 <button
                   type="submit"
-                  className="w-full mt-8 bg-[#1E3F37] hover:bg-[#1E3F37]/90 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                  disabled={submitting}
+                  className="w-full mt-8 bg-[#1E3F37] hover:bg-[#1E3F37]/90 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  <ShieldCheck className="w-4 h-4 text-accent" /> Valider mon inscription et Commander
+                  <ShieldCheck className="w-4 h-4 text-accent" /> {submitting ? 'Création en cours...' : "Valider mon inscription et Commander"}
                 </button>
               </form>
             )}
@@ -357,36 +471,40 @@ export default function Connexion() {
                   </div>
                 </div>
 
-                {/* Téléphone */}
+                {/* Mot de passe */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Numéro de téléphone Bénin</label>
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Mot de passe</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
-                      <Phone className="w-4 h-4" />
+                      <Lock className="w-4 h-4" />
                     </span>
                     <input 
-                      type="tel" 
+                      type="password" 
                       required
-                      value={phone}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      placeholder="01 40 40 40 40"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Votre mot de passe"
                       className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
                     />
                   </div>
-                  {phoneHelp.message && (
-                    <p className={`text-[10px] font-black leading-tight flex items-center gap-1.5 mt-1 ${
-                      phoneHelp.isValid ? 'text-emerald-700' : 'text-rose-600'
-                    }`}>
-                      {phoneHelp.isValid ? '✓' : '⚠️'} {phoneHelp.message}
-                    </p>
+                  {needsConfirmationLogin && (
+                    <button
+                      type="button"
+                      onClick={() => handleResend(email)}
+                      disabled={resending}
+                      className="text-[10px] font-black text-[#1E3F37] underline mt-1 disabled:opacity-60"
+                    >
+                      {resending ? 'Envoi...' : "Renvoyer l'email de confirmation"}
+                    </button>
                   )}
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full mt-8 bg-[#1E3F37] hover:bg-[#1e3f37]/90 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                  disabled={submitting}
+                  className="w-full mt-8 bg-[#1E3F37] hover:bg-[#1e3f37]/90 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  <LogIn className="w-4 h-4" /> Se connecter
+                  <LogIn className="w-4 h-4" /> {submitting ? 'Connexion...' : 'Se connecter'}
                 </button>
               </form>
             )}
