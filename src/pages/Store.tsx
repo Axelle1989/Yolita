@@ -5,11 +5,12 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { useProducts } from '../ProductContext';
+import { useSiteConfig } from '../SiteConfigContext';
 import ProductCard from '../components/ProductCard';
 
 export default function Store() {
-  const { products } = useProducts();
+  const { config } = useSiteConfig();
+  const products = config.products;
 
   return (
     <div className="pt-32 pb-24 bg-background">

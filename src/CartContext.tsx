@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Product } from './types';
-import { CAPACITIES } from './constants';
+import { CAPACITIES as STATIC_CAPACITIES, CapacityOption } from './constants';
 
 interface CartContextType {
   cart: CartItem[];
@@ -15,7 +15,8 @@ interface CartContextType {
     quantity?: number,
     capacity?: string,
     isDiy?: boolean,
-    diyDetails?: { base: string; isSweetened: boolean; price: number; fruits?: string[] }
+    diyDetails?: { base: string; isSweetened: boolean; price: number; fruits?: string[] },
+    capacitiesList?: CapacityOption[]
   ) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
@@ -45,7 +46,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     quantity = 1,
     capacity = 'Petit (125 ml)',
     isDiy = false,
-    diyDetails?: { base: string; isSweetened: boolean; price: number; fruits?: string[] }
+    diyDetails?: { base: string; isSweetened: boolean; price: number; fruits?: string[] },
+    capacitiesList: CapacityOption[] = STATIC_CAPACITIES
   ) => {
     const fruitsKeyPart = diyDetails?.fruits && diyDetails.fruits.length > 0
       ? diyDetails.fruits.join('-')
@@ -78,7 +80,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       } else {
         // Adjust product price based on capacity option
-        const capOption = CAPACITIES.find((c) => c.name === capacity);
+        const capOption = capacitiesList.find((c) => c.name === capacity);
         if (capOption) {
           const rawPrice = product.price * capOption.priceFactor;
           // Round to nearest 50 for clean FCFA values and clamp to minimum of 500 FCFA

@@ -7,8 +7,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, Star, Heart, Sparkles, Sprout, ShieldCheck, Smile, Check, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { CAPACITIES, DIY_BASES, DIY_AROMAS } from '../constants';
-import { useProducts } from '../ProductContext';
+import { useSiteConfig } from '../SiteConfigContext';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../CartContext';
 
@@ -24,7 +23,11 @@ const aromaVisuals: Record<string, { emoji: string, bg: string, accent: string }
 
 export default function Home() {
   const { addToCart } = useCart();
-  const { products } = useProducts();
+  const { config } = useSiteConfig();
+  const products = config.products;
+  const CAPACITIES = config.capacities;
+  const DIY_BASES = config.diyBases;
+  const DIY_AROMAS = config.diyAromas;
   
   // Custom Yogurt Builder state (Option B - Multiple Fruits support)
   const [diyBase, setDiyBase] = useState(DIY_BASES[0]);

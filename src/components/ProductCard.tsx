@@ -8,7 +8,7 @@ import { Product } from '../types';
 import { useCart } from '../CartContext';
 import { ShoppingCart, Check, Plus, Minus } from 'lucide-react';
 import { motion } from 'motion/react';
-import { CAPACITIES } from '../constants';
+import { useSiteConfig } from '../SiteConfigContext';
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +16,8 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
+  const { config } = useSiteConfig();
+  const CAPACITIES = config.capacities;
   const [quantity, setQuantity] = useState(1);
   const [selectedAroma, setSelectedAroma] = useState(product.aromas?.[0] || 'Nature');
   const [selectedCapacity, setSelectedCapacity] = useState('Petit (125 ml)');
@@ -28,7 +30,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const currentPrice = isPack ? product.price : Math.max(500, Math.round((product.price * factor) / 50) * 50);
 
   const handleAdd = () => {
-    addToCart(product, selectedAroma, quantity, isPack ? 'Standard' : selectedCapacity);
+    addToCart(product, selectedAroma, quantity, isPack ? 'Standard' : selectedCapacity, false, undefined, CAPACITIES);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };

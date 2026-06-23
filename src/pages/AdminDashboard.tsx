@@ -35,17 +35,21 @@ import {
   ExternalLink,
   Smartphone,
   CheckSquare,
-  User
+  User,
+  Sparkles,
+  Percent
 } from 'lucide-react';
-import { useProducts } from '../ProductContext';
+import { useSiteConfig } from '../SiteConfigContext';
 import { Product, Order, StatusHistoryItem } from '../types';
+import { supabase } from '../supabaseClient';
 
 export default function AdminDashboard() {
-  const { products, updateProduct, resetProducts } = useProducts();
+  const { config, updateProduct, updateCapacities, updateDiyBases, updateDiyAromas, resetAll, saving, error: configError } = useSiteConfig();
+  const products = config.products;
+  const resetProducts = resetAll;
   
-  // Credentials requested by the user
-  const ADMIN_EMAIL = 'axo.hossou@epitech.eu';
-  const ADMIN_PASSWORD = 'Alicemom19@';
+  // Les identifiants admin ne sont plus stockés ici : ils sont vérifiés côté
+  // serveur via une Edge Function Supabase (supabase/functions/admin-login).
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,7 +60,7 @@ export default function AdminDashboard() {
   });
 
   // Active view: 'orders' or 'products'
-  const [activeTab, setActiveTab] = useState<'orders' | 'products'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition'>('orders');
 
   // Orders list and filtering
   const [orders, setOrders] = useState<Order[]>([]);
@@ -100,16 +104,29 @@ export default function AdminDashboard() {
     }, 3000);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [submittingLogin, setSubmittingLogin] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSubmittingLogin(true);
 
-    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      setIsLoggedIn(true);
-      sessionStorage.setItem('yolita_admin_logged', 'true');
-      triggerToast('Connexion réussie ! Bienvenue Espace Admin Yolita.');
-    } else {
-      setError('Identifiants admin incorrects. Réessayez.');
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('admin-login', {
+        body: { email: email.trim(), password },
+      });
+
+      if (fnError || !data?.success) {
+        setError(data?.error || 'Identifiants admin incorrects. Réessayez.');
+      } else {
+        setIsLoggedIn(true);
+        sessionStorage.setItem('yolita_admin_logged', 'true');
+        triggerToast('Connexion réussie ! Bienvenue Espace Admin Yolita.');
+      }
+    } catch (err) {
+      setError('Impossible de vérifier vos identifiants pour le moment. Réessayez.');
+    } finally {
+      setSubmittingLogin(false);
     }
   };
 
@@ -342,9 +359,10 @@ export default function AdminDashboard() {
 
             <button
               type="submit"
-              className="w-full bg-[#1E3F37] hover:bg-[#1E3F37]/90 text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
+              disabled={submittingLogin}
+              className="w-full bg-[#1E3F37] hover:bg-[#1E3F37]/90 text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 uppercase text-xs tracking-widest disabled:opacity-60"
             >
-              <LogIn className="w-4 h-4" /> Se connecter
+              <LogIn className="w-4 h-4" /> {submittingLogin ? 'Vérification...' : 'Se connecter'}
             </button>
           </form>
         </motion.div>
@@ -382,7 +400,7 @@ export default function AdminDashboard() {
                 <span className="text-[10px] font-black uppercase text-accent bg-accent/10 px-2.5 py-0.5 rounded-md border border-accent/20">
                   Mode Administrateur
                 </span>
-                <span className="text-xs text-gray-400 font-bold">{email || ADMIN_EMAIL}</span>
+                <span className="text-xs text-gray-400 font-bold">{email || 'Admin Yolita'}</span>
               </div>
               <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight mt-1">
                 Espace de Gestion Yolita 🇧🇯
@@ -436,7 +454,28 @@ export default function AdminDashboard() {
               {products.length}
             </span>
           </button>
+          <button
+            onClick={() => setActiveTab('composition')}
+            className={`px-6 py-4 font-black uppercase text-xs tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'composition' 
+                ? 'border-[#1E3F37] text-[#1E3F37]' 
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" /> Composition (Bases / Arômes / Formats)
+          </button>
         </div>
+
+        {configError && (
+          <div className="mb-6 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl p-4">
+            ⚠️ {configError}
+          </div>
+        )}
+        {saving && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold rounded-xl p-3">
+            Sauvegarde en cours...
+          </div>
+        )}
 
         {/* Reset Confirmation Dialogue Modal */}
         {showResetConfirm && (
@@ -1043,7 +1082,193 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {activeTab === 'composition' && (
+          <CompositionEditor
+            capacities={config.capacities}
+            diyBases={config.diyBases}
+            diyAromas={config.diyAromas}
+            onSaveCapacities={updateCapacities}
+            onSaveBases={updateDiyBases}
+            onSaveAromas={updateDiyAromas}
+          />
+        )}
+
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Éditeur des options de composition du yaourt ("Compose ton Yolita")
+// Permet à l'admin de modifier les capacités, les bases et les arômes/prix.
+// ---------------------------------------------------------------------------
+function CompositionEditor({
+  capacities,
+  diyBases,
+  diyAromas,
+  onSaveCapacities,
+  onSaveBases,
+  onSaveAromas,
+}: {
+  capacities: import('../constants').CapacityOption[];
+  diyBases: import('../SiteConfigContext').DiyBase[];
+  diyAromas: import('../SiteConfigContext').DiyAroma[];
+  onSaveCapacities: (v: import('../constants').CapacityOption[]) => Promise<void>;
+  onSaveBases: (v: import('../SiteConfigContext').DiyBase[]) => Promise<void>;
+  onSaveAromas: (v: import('../SiteConfigContext').DiyAroma[]) => Promise<void>;
+}) {
+  const [localCapacities, setLocalCapacities] = useState(capacities);
+  const [localBases, setLocalBases] = useState(diyBases);
+  const [localAromas, setLocalAromas] = useState(diyAromas);
+  const [savingSection, setSavingSection] = useState<string | null>(null);
+
+  const updateCapField = (index: number, field: keyof typeof localCapacities[0], value: string | number) => {
+    setLocalCapacities((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
+  };
+  const updateBaseField = (index: number, field: keyof typeof localBases[0], value: string | number) => {
+    setLocalBases((prev) => prev.map((b, i) => (i === index ? { ...b, [field]: value } : b)));
+  };
+  const updateAromaField = (index: number, field: keyof typeof localAromas[0], value: string | number) => {
+    setLocalAromas((prev) => prev.map((a, i) => (i === index ? { ...a, [field]: value } : a)));
+  };
+
+  const addAroma = () => {
+    setLocalAromas((prev) => [
+      ...prev,
+      { id: `arome-${Date.now()}`, name: 'Nouvel arôme', priceAdd: 0 },
+    ]);
+  };
+  const removeAroma = (index: number) => {
+    setLocalAromas((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addBase = () => {
+    setLocalBases((prev) => [
+      ...prev,
+      { id: `base-${Date.now()}`, name: 'Nouvelle base', priceAdd: 0, desc: '' },
+    ]);
+  };
+  const removeBase = (index: number) => {
+    setLocalBases((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const inputClass =
+    'w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30';
+
+  return (
+    <div className="space-y-10">
+      {/* CAPACITÉS */}
+      <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Formats / Capacités</h3>
+          <button
+            onClick={async () => {
+              setSavingSection('capacities');
+              await onSaveCapacities(localCapacities);
+              setSavingSection(null);
+            }}
+            disabled={savingSection === 'capacities'}
+            className="px-4 py-2 rounded-lg bg-[#1E3F37] text-white text-xs font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-60"
+          >
+            <Save className="w-3.5 h-3.5" /> {savingSection === 'capacities' ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
+        <div className="space-y-3">
+          {localCapacities.map((cap, i) => (
+            <div key={cap.id} className="grid grid-cols-2 md:grid-cols-5 gap-2 items-center bg-[#FAFAF5] p-3 rounded-xl">
+              <input className={inputClass} value={cap.name} onChange={(e) => updateCapField(i, 'name', e.target.value)} placeholder="Nom" />
+              <input className={inputClass} value={cap.volume} onChange={(e) => updateCapField(i, 'volume', e.target.value)} placeholder="Volume" />
+              <input className={inputClass} value={cap.desc} onChange={(e) => updateCapField(i, 'desc', e.target.value)} placeholder="Description" />
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-gray-400 font-black">Coeff.</span>
+                <input type="number" step="0.05" className={inputClass} value={cap.priceFactor} onChange={(e) => updateCapField(i, 'priceFactor', parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-gray-400 font-black">Prix DIY</span>
+                <input type="number" className={inputClass} value={cap.customBasePrice} onChange={(e) => updateCapField(i, 'customBasePrice', parseInt(e.target.value) || 0)} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-gray-400 font-bold mt-3">
+          "Coeff." multiplie le prix de base du produit pour ce format. "Prix DIY" est le prix de départ pour le yaourt personnalisé (compose ton Yolita) à ce format.
+        </p>
+      </section>
+
+      {/* BASES */}
+      <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Bases (Compose ton Yolita)</h3>
+          <div className="flex gap-2">
+            <button onClick={addBase} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-widest">
+              + Ajouter
+            </button>
+            <button
+              onClick={async () => {
+                setSavingSection('bases');
+                await onSaveBases(localBases);
+                setSavingSection(null);
+              }}
+              disabled={savingSection === 'bases'}
+              className="px-4 py-2 rounded-lg bg-[#1E3F37] text-white text-xs font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-60"
+            >
+              <Save className="w-3.5 h-3.5" /> {savingSection === 'bases' ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {localBases.map((base, i) => (
+            <div key={base.id} className="grid grid-cols-2 md:grid-cols-4 gap-2 items-center bg-[#FAFAF5] p-3 rounded-xl">
+              <input className={inputClass} value={base.name} onChange={(e) => updateBaseField(i, 'name', e.target.value)} placeholder="Nom" />
+              <input className={inputClass} value={base.desc} onChange={(e) => updateBaseField(i, 'desc', e.target.value)} placeholder="Description" />
+              <div className="flex items-center gap-1">
+                <Percent className="w-3.5 h-3.5 text-gray-400" />
+                <input type="number" className={inputClass} value={base.priceAdd} onChange={(e) => updateBaseField(i, 'priceAdd', parseInt(e.target.value) || 0)} placeholder="Supplément (FCFA)" />
+              </div>
+              <button onClick={() => removeBase(i)} className="text-rose-500 text-xs font-black flex items-center gap-1 justify-center">
+                <Trash2 className="w-3.5 h-3.5" /> Retirer
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ARÔMES */}
+      <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Arômes / Fruits (Compose ton Yolita)</h3>
+          <div className="flex gap-2">
+            <button onClick={addAroma} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-widest">
+              + Ajouter
+            </button>
+            <button
+              onClick={async () => {
+                setSavingSection('aromas');
+                await onSaveAromas(localAromas);
+                setSavingSection(null);
+              }}
+              disabled={savingSection === 'aromas'}
+              className="px-4 py-2 rounded-lg bg-[#1E3F37] text-white text-xs font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-60"
+            >
+              <Save className="w-3.5 h-3.5" /> {savingSection === 'aromas' ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {localAromas.map((aroma, i) => (
+            <div key={aroma.id} className="grid grid-cols-3 gap-2 items-center bg-[#FAFAF5] p-3 rounded-xl">
+              <input className={inputClass} value={aroma.name} onChange={(e) => updateAromaField(i, 'name', e.target.value)} placeholder="Nom de l'arôme" />
+              <div className="flex items-center gap-1">
+                <Percent className="w-3.5 h-3.5 text-gray-400" />
+                <input type="number" className={inputClass} value={aroma.priceAdd} onChange={(e) => updateAromaField(i, 'priceAdd', parseInt(e.target.value) || 0)} placeholder="Supplément (FCFA)" />
+              </div>
+              <button onClick={() => removeAroma(i)} className="text-rose-500 text-xs font-black flex items-center gap-1 justify-center">
+                <Trash2 className="w-3.5 h-3.5" /> Retirer
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

@@ -5,7 +5,7 @@
 
 import { Routes, Route } from 'react-router-dom';
 import { CartProvider } from './CartContext';
-import { ProductProvider } from './ProductContext';
+import { SiteConfigProvider } from './SiteConfigContext';
 import { UserProvider } from './UserContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -21,7 +21,7 @@ import Connexion from './pages/Connexion';
 
 export default function App() {
   return (
-    <ProductProvider>
+    <SiteConfigProvider>
       <UserProvider>
         <CartProvider>
           <div className="flex flex-col min-h-screen">
@@ -43,6 +43,6 @@ export default function App() {
           </div>
         </CartProvider>
       </UserProvider>
-    </ProductProvider>
+    </SiteConfigProvider>
   );
 }
