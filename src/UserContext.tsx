@@ -182,6 +182,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: mapSupabaseError(error.message) };
     }
 
+    // Cas particulier Supabase : pour des raisons de sécurité (anti-énumération
+    // d'emails), signUp() sur un email déjà inscrit et confirmé ne renvoie PAS
+    // d'erreur — il renvoie un "utilisateur" avec une liste d'identités vide et
+    // aucune session. Il faut détecter ce cas pour rediriger vers la connexion
+    // plutôt que de laisser croire qu'un compte vient d'être créé.
+    const identities = (data.user as any)?.identities;
+    if (data.user && !data.session && identities && identities.length === 0) {
+      return {
+        success: false,
+        error: 'Cette adresse email est déjà enregistrée. Connectez-vous plutôt !',
+      };
+    }
+
     const needsConfirmation = !data.session;
 
     if (data.user && data.session) {

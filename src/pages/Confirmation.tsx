@@ -24,6 +24,25 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Order, StatusHistoryItem } from '../types';
+import { supabase } from '../supabaseClient';
+
+function mapDbOrder(row: any): Order {
+  return {
+    orderNumber: row.order_number,
+    items: row.items,
+    total: row.total,
+    date: row.created_at,
+    location: row.location,
+    address: row.address,
+    payment: row.payment,
+    status: row.status,
+    statusHistory: row.status_history || [],
+    adminMessage: row.admin_message || '',
+    clientMessage: row.client_message || '',
+    // @ts-ignore id technique Supabase utile pour les updates
+    _id: row.id,
+  } as any;
+}
 
 export default function Confirmation() {
   const location = useLocation();
@@ -37,21 +56,32 @@ export default function Confirmation() {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [searchError, setSearchError] = useState('');
 
-  // Load orders on mount
+  // Load orders on mount (Supabase RLS garantit qu'on ne reçoit QUE les
+  // commandes appartenant à l'utilisateur connecté — sécurité par utilisateur)
   useEffect(() => {
-    const list = JSON.parse(localStorage.getItem('yolita_orders') || '[]');
-    setOrders(list);
+    (async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: true });
 
-    // If we just navigated from checkout, automatically set that as the active order
-    if (orderNumberFromState) {
-      const found = list.find((o: Order) => o.orderNumber === orderNumberFromState);
-      if (found) {
-        setActiveOrder(found);
+      if (error || !data) {
+        setOrders([]);
+        return;
       }
-    } else if (list.length > 0) {
-      // Otherwise default to the very last order placed
-      setActiveOrder(list[list.length - 1]);
-    }
+
+      const list = data.map(mapDbOrder);
+      setOrders(list);
+
+      if (orderNumberFromState) {
+        const found = list.find((o) => o.orderNumber === orderNumberFromState);
+        if (found) {
+          setActiveOrder(found);
+        }
+      } else if (list.length > 0) {
+        setActiveOrder(list[list.length - 1]);
+      }
+    })();
   }, [orderNumberFromState]);
 
   // Handle manual order search
@@ -81,42 +111,49 @@ export default function Confirmation() {
   };
 
   // Client finalizes order reception ("pour de bon")
-  const finalizeOrder = () => {
+  const finalizeOrder = async () => {
     if (!activeOrder) return;
+    const target = activeOrder as any;
 
-    const updatedOrders = orders.map((o) => {
-      if (o.orderNumber === activeOrder.orderNumber) {
-        const now = new Date().toISOString();
-        const newHistory: StatusHistoryItem[] = [
-          ...o.statusHistory,
-          {
-            status: 'completed',
-            date: now,
-            comment: clientComment.trim() 
-              ? `Le client a achevé sa commande pour de bon avec le message : "${clientComment.trim()}"`
-              : "Le client a validé la réception finale et achevé sa commande avec succès ! 🎉"
-          }
-        ];
+    const now = new Date().toISOString();
+    const newHistory: StatusHistoryItem[] = [
+      ...target.statusHistory,
+      {
+        status: 'completed',
+        date: now,
+        comment: clientComment.trim()
+          ? `Le client a achevé sa commande pour de bon avec le message : "${clientComment.trim()}"`
+          : "Le client a validé la réception finale et achevé sa commande avec succès ! 🎉",
+      },
+    ];
+    const finalClientMessage = clientComment.trim() || 'Commande reçue parfaitement, merci Yolita !';
 
-        return {
-          ...o,
-          status: 'completed' as const,
-          statusHistory: newHistory,
-          clientMessage: clientComment.trim() || 'Commande reçue parfaitement, merci Yolita !'
-        };
-      }
-      return o;
-    });
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: 'completed',
+        status_history: newHistory,
+        client_message: finalClientMessage,
+      })
+      .eq('id', target._id);
 
-    localStorage.setItem('yolita_orders', JSON.stringify(updatedOrders));
+    if (error) {
+      setSearchError("Impossible d'enregistrer votre confirmation pour le moment. Réessayez.");
+      return;
+    }
+
+    const updatedOrders = orders.map((o) =>
+      o.orderNumber === activeOrder.orderNumber
+        ? { ...o, status: 'completed' as const, statusHistory: newHistory, clientMessage: finalClientMessage }
+        : o
+    );
     setOrders(updatedOrders);
-    
-    // Update local active copy as well
-    const freshActive = updatedOrders.find(o => o.orderNumber === activeOrder.orderNumber);
+
+    const freshActive = updatedOrders.find((o) => o.orderNumber === activeOrder.orderNumber);
     if (freshActive) {
       setActiveOrder(freshActive);
     }
-    
+
     setFeedbackSent(true);
   };
 

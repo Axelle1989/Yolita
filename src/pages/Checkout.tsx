@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useCart } from '../CartContext';
 import { useUser } from '../UserContext';
+import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { DELIVERY_FEES } from '../constants';
 import { ChevronLeft, Info, CheckCircle2, Navigation, CreditCard, Sparkles, ArrowRight } from 'lucide-react';
@@ -71,12 +72,12 @@ export default function Checkout() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customer) return;
 
     setLoading(true);
-    
+
     // Generate organic order number
     const orderNumber = 'YL-' + Math.floor(Math.random() * 1000000);
 
@@ -84,40 +85,54 @@ export default function Checkout() {
     if (addressRef && (!customer.address || customer.address !== addressRef)) {
       updateCustomerAddress(addressRef);
     }
-    
-    // Save order
-    const order = {
-      orderNumber,
+
+    // Récupérer l'utilisateur Supabase actuel pour lier la commande (sécurité par utilisateur)
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user.id;
+
+    if (!userId) {
+      setLoading(false);
+      alert("Votre session a expiré. Reconnectez-vous pour finaliser la commande.");
+      navigate('/connexion');
+      return;
+    }
+
+    const orderRow = {
+      user_id: userId,
+      order_number: orderNumber,
       items: cart,
       total: finalTotal,
-      date: new Date().toISOString(),
       location: markerPos,
       address: addressRef,
       payment: paymentMethod,
       status: 'pending',
-      statusHistory: [
-        { 
-          status: 'pending', 
-          date: new Date().toISOString(), 
-          comment: 'Commande enregistrée avec succès. Notre atelier prépare la validation.' 
-        }
+      status_history: [
+        {
+          status: 'pending',
+          date: new Date().toISOString(),
+          comment: 'Commande enregistrée avec succès. Notre atelier prépare la validation.',
+        },
       ],
-      adminMessage: '',
-      clientMessage: '',
-      // Sync client identification info
-      clientEmail: customer.email,
-      clientName: customer.name,
-      clientPhone: customer.phone
+      admin_message: '',
+      client_message: '',
+      client_email: customer.email,
+      client_name: customer.name,
+      client_phone: customer.phone,
     };
-    
-    const existingOrders = JSON.parse(localStorage.getItem('yolita_orders') || '[]');
-    localStorage.setItem('yolita_orders', JSON.stringify([...existingOrders, order]));
+
+    const { error: insertError } = await supabase.from('orders').insert(orderRow);
+
+    if (insertError) {
+      setLoading(false);
+      alert("Erreur lors de l'enregistrement de la commande. Réessayez. (" + insertError.message + ")");
+      return;
+    }
 
     setTimeout(() => {
       setLoading(false);
       clearCart();
       navigate('/confirmation', { state: { orderNumber } });
-    }, 2000);
+    }, 1200);
   };
 
   if (cart.length === 0) {

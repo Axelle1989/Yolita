@@ -55,9 +55,11 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return sessionStorage.getItem('yolita_admin_logged') === 'true';
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Note sécurité : on ne persiste plus la session admin entre rechargements de
+  // page (pas de sessionStorage), car cela nécessiterait de stocker le mot de
+  // passe pour pouvoir continuer à appeler les Edge Functions sécurisées.
+  // Une reconnexion à chaque ouverture de /admin est le compromis le plus sûr.
 
   // Active view: 'orders' or 'products'
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition'>('orders');
@@ -84,16 +86,60 @@ export default function AdminDashboard() {
   
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  // Load orders and select the first one if available
+  // Convertit une ligne Supabase (snake_case) vers le format Order (camelCase) utilisé par l'UI
+  const mapDbOrder = (row: any): Order => ({
+    orderNumber: row.order_number,
+    items: row.items,
+    total: row.total,
+    date: row.created_at,
+    location: row.location,
+    address: row.address,
+    payment: row.payment,
+    status: row.status,
+    statusHistory: row.status_history || [],
+    adminMessage: row.admin_message || '',
+    clientMessage: row.client_message || '',
+    // @ts-ignore champs additionnels utiles pour l'admin, l'id réel Supabase (uuid) sert aux actions
+    _id: row.id,
+    clientEmail: row.client_email,
+    clientName: row.client_name,
+    clientPhone: row.client_phone,
+  } as any);
+
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
+
+  const callAdminOrders = async (body: Record<string, any>) => {
+    const { data, error: fnError } = await supabase.functions.invoke('admin-orders', {
+      body: { adminEmail: email.trim(), adminPassword: password, ...body },
+    });
+    if (fnError || !data?.success) {
+      throw new Error(data?.error || fnError?.message || 'Erreur Edge Function admin-orders.');
+    }
+    return data;
+  };
+
+  const loadOrders = async () => {
+    setOrdersLoading(true);
+    setOrdersError('');
+    try {
+      const data = await callAdminOrders({ action: 'list' });
+      const mapped = (data.orders || []).map(mapDbOrder);
+      setOrders(mapped);
+      if (mapped.length > 0 && !selectedOrder) {
+        setSelectedOrder(mapped[0]);
+      }
+    } catch (err: any) {
+      setOrdersError(err.message || 'Impossible de charger les commandes.');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  // Load orders once logged in
   useEffect(() => {
     if (isLoggedIn) {
-      const list: Order[] = JSON.parse(localStorage.getItem('yolita_orders') || '[]');
-      // Sort with newest orders first
-      const sorted = list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setOrders(sorted);
-      if (sorted.length > 0 && !selectedOrder) {
-        setSelectedOrder(sorted[0]);
-      }
+      loadOrders();
     }
   }, [isLoggedIn]);
 
@@ -120,7 +166,6 @@ export default function AdminDashboard() {
         setError(data?.error || 'Identifiants admin incorrects. Réessayez.');
       } else {
         setIsLoggedIn(true);
-        sessionStorage.setItem('yolita_admin_logged', 'true');
         triggerToast('Connexion réussie ! Bienvenue Espace Admin Yolita.');
       }
     } catch (err) {
@@ -132,95 +177,104 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    sessionStorage.removeItem('yolita_admin_logged');
     triggerToast('Espace administrateur déconnecté.');
   };
 
-  // Status management workflow
-  const validateOrder = (orderNum: string) => {
+  const validateOrder = async (orderNum: string) => {
     const defaultMsg = "Votre yaourt moussé Yolita est en cours de brassage traditionnel ! Notre livreur se prépare.";
     const messageToSend = validationMessage.trim() || defaultMsg;
 
-    const list: Order[] = JSON.parse(localStorage.getItem('yolita_orders') || '[]');
-    const updated = list.map((o) => {
-      if (o.orderNumber === orderNum) {
-        const now = new Date().toISOString();
-        return {
-          ...o,
-          status: 'validated' as const,
-          adminMessage: messageToSend,
-          statusHistory: [
-            ...o.statusHistory,
-            {
-              status: 'validated' as const,
-              date: now,
-              comment: `Commande validée par l'Atelier. Message client envoyé : "${messageToSend}"`
-            }
-          ]
-        };
-      }
-      return o;
-    });
+    const target = orders.find((o) => o.orderNumber === orderNum) as any;
+    if (!target) return;
 
-    localStorage.setItem('yolita_orders', JSON.stringify(updated));
-    setOrders(updated);
-    
-    // Refresh selected order details
-    const current = updated.find(o => o.orderNumber === orderNum);
-    if (current) {
-      setSelectedOrder(current);
+    const now = new Date().toISOString();
+    const newHistory = [
+      ...target.statusHistory,
+      {
+        status: 'validated' as const,
+        date: now,
+        comment: `Commande validée par l'Atelier. Message client envoyé : "${messageToSend}"`,
+      },
+    ];
+
+    try {
+      await callAdminOrders({
+        action: 'updateStatus',
+        orderId: target._id,
+        status: 'validated',
+        statusHistory: newHistory,
+        adminMessage: messageToSend,
+      });
+
+      const updated = orders.map((o) =>
+        o.orderNumber === orderNum
+          ? { ...o, status: 'validated' as const, adminMessage: messageToSend, statusHistory: newHistory }
+          : o
+      );
+      setOrders(updated);
+      const current = updated.find((o) => o.orderNumber === orderNum);
+      if (current) setSelectedOrder(current);
+      setValidationMessage('');
+      triggerToast(`Commande ${orderNum} validée, message envoyé !`);
+    } catch (err: any) {
+      triggerToast("Erreur : " + err.message);
     }
-
-    setValidationMessage('');
-    triggerToast(`Commande ${orderNum} validée, message envoyé !`);
   };
 
-  const deliverOrder = (orderNum: string) => {
-    const list: Order[] = JSON.parse(localStorage.getItem('yolita_orders') || '[]');
-    const updated = list.map((o) => {
-      if (o.orderNumber === orderNum) {
-        const now = new Date().toISOString();
-        return {
-          ...o,
-          status: 'delivered' as const,
-          statusHistory: [
-            ...o.statusHistory,
-            {
-              status: 'delivered' as const,
-              date: now,
-              comment: "Colis confié au service d'expédition express Yolita pour livraison immédiate."
-            }
-          ]
-        };
-      }
-      return o;
-    });
+  const deliverOrder = async (orderNum: string) => {
+    const target = orders.find((o) => o.orderNumber === orderNum) as any;
+    if (!target) return;
 
-    localStorage.setItem('yolita_orders', JSON.stringify(updated));
-    setOrders(updated);
+    const now = new Date().toISOString();
+    const newHistory = [
+      ...target.statusHistory,
+      {
+        status: 'delivered' as const,
+        date: now,
+        comment: "Colis confié au service d'expédition express Yolita pour livraison immédiate.",
+      },
+    ];
 
-    const current = updated.find(o => o.orderNumber === orderNum);
-    if (current) {
-      setSelectedOrder(current);
+    try {
+      await callAdminOrders({
+        action: 'updateStatus',
+        orderId: target._id,
+        status: 'delivered',
+        statusHistory: newHistory,
+        adminMessage: target.adminMessage || '',
+      });
+
+      const updated = orders.map((o) =>
+        o.orderNumber === orderNum ? { ...o, status: 'delivered' as const, statusHistory: newHistory } : o
+      );
+      setOrders(updated);
+      const current = updated.find((o) => o.orderNumber === orderNum);
+      if (current) setSelectedOrder(current);
+      triggerToast(`Commande ${orderNum} expédiée avec succès !`);
+    } catch (err: any) {
+      triggerToast("Erreur : " + err.message);
     }
-
-    triggerToast(`Commande ${orderNum} expédiée avec succès !`);
   };
 
-  const deleteOrder = (orderNum: string) => {
+  const deleteOrder = async (orderNum: string) => {
     if (!window.confirm(`Voulez-vous supprimer définitivement la commande ${orderNum} ?`)) {
       return;
     }
 
-    const list: Order[] = JSON.parse(localStorage.getItem('yolita_orders') || '[]');
-    const updated = list.filter(o => o.orderNumber !== orderNum);
-    localStorage.setItem('yolita_orders', JSON.stringify(updated));
-    setOrders(updated);
+    const target = orders.find((o) => o.orderNumber === orderNum) as any;
+    if (!target) return;
 
-    if (selectedOrder?.orderNumber === orderNum) {
-      setSelectedOrder(updated[0] || null);
+    try {
+      await callAdminOrders({ action: 'delete', orderId: target._id });
+      const updated = orders.filter((o) => o.orderNumber !== orderNum);
+      setOrders(updated);
+      if (selectedOrder?.orderNumber === orderNum) {
+        setSelectedOrder(updated[0] || null);
+      }
+      triggerToast(`Commande ${orderNum} supprimée.`);
+    } catch (err: any) {
+      triggerToast("Erreur : " + err.message);
     }
-    triggerToast(`Commande ${orderNum} supprimée.`);
   };
 
   // Product edits logic
