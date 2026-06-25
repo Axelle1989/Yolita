@@ -20,11 +20,13 @@ import {
   ArrowRight,
   ShieldCheck,
   ShoppingBag,
-  MailCheck
+  MailCheck,
+  LogOut,
+  Trash2
 } from 'lucide-react';
 
 export default function Connexion() {
-  const { customer, registerCustomer, loginCustomer, resendConfirmationEmail } = useUser();
+  const { customer, registerCustomer, loginCustomer, resendConfirmationEmail, logoutCustomer, deleteOwnAccount } = useUser();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/';
@@ -47,6 +49,21 @@ export default function Connexion() {
   const [awaitingConfirmation, setAwaitingConfirmation] = useState<string | null>(null);
   const [needsConfirmationLogin, setNeedsConfirmationLogin] = useState(false);
   const [resending, setResending] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    setErrorMsg('');
+    const res = await deleteOwnAccount();
+    setDeletingAccount(false);
+    if (res.success) {
+      navigate('/');
+    } else {
+      setErrorMsg(res.error || 'Impossible de supprimer le compte pour le moment.');
+      setConfirmDelete(false);
+    }
+  };
 
   // Dynamic phone validation live check
   const handlePhoneChange = (val: string) => {
@@ -231,6 +248,49 @@ export default function Connexion() {
             >
               Procéder à la commande <ArrowRight className="w-4 h-4" />
             </Link>
+
+            <button
+              onClick={() => logoutCustomer()}
+              className="w-full bg-gray-50 text-gray-500 py-3 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-100 transition-all flex items-center justify-center gap-2"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Se déconnecter
+            </button>
+
+            {errorMsg && (
+              <p className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3">
+                {errorMsg}
+              </p>
+            )}
+
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full text-rose-500 py-2 px-6 font-bold uppercase tracking-widest text-[10px] hover:text-rose-600 transition-all flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Supprimer définitivement mon compte
+              </button>
+            ) : (
+              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center space-y-3">
+                <p className="text-xs font-bold text-rose-700">
+                  ⚠️ Cette action est irréversible. Votre compte et toutes vos données (commandes, historique) seront supprimés définitivement. Confirmer ?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deletingAccount}
+                    className="flex-1 bg-rose-600 text-white py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest disabled:opacity-60"
+                  >
+                    {deletingAccount ? 'Suppression...' : 'Oui, supprimer'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 bg-white border border-gray-200 text-gray-500 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

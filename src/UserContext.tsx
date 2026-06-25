@@ -35,6 +35,7 @@ interface UserContextType {
   resendConfirmationEmail: (email: string) => Promise<AuthResult>;
   logoutCustomer: () => Promise<void>;
   updateCustomerAddress: (address: string) => Promise<void>;
+  deleteOwnAccount: () => Promise<AuthResult>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -252,6 +253,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteOwnAccount = async (): Promise<AuthResult> => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    if (!accessToken) {
+      return { success: false, error: 'Aucune session active.' };
+    }
+
+    const { data, error } = await supabase.functions.invoke('delete-account', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (error || !data?.success) {
+      return { success: false, error: data?.error || error?.message || 'Suppression impossible.' };
+    }
+
+    // La suppression a réussi côté serveur : on déconnecte localement aussi.
+    await supabase.auth.signOut();
+    setCustomer(null);
+    return { success: true };
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -261,7 +284,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         loginCustomer,
         resendConfirmationEmail,
         logoutCustomer,
-        updateCustomerAddress
+        updateCustomerAddress,
+        deleteOwnAccount,
       }}
     >
       {children}
