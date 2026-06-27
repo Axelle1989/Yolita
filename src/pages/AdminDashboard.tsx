@@ -108,6 +108,7 @@ export default function AdminDashboard() {
 
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
+  const [customerCount, setCustomerCount] = useState<number | null>(null);
 
   const callAdminOrders = async (body: Record<string, any>) => {
     const { data, error: fnError } = await supabase.functions.invoke('admin-orders', {
@@ -140,6 +141,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isLoggedIn) {
       loadOrders();
+      (async () => {
+        try {
+          const data = await callAdminOrders({ action: 'countUsers' });
+          setCustomerCount(data.count);
+        } catch {
+          setCustomerCount(null);
+        }
+      })();
     }
   }, [isLoggedIn]);
 
@@ -285,7 +294,8 @@ export default function AdminDashboard() {
       price: product.price,
       image: product.image,
       description: product.description,
-      badge: product.badge || ''
+      badge: product.badge || '',
+      aromas: product.aromas || []
     });
   };
 
@@ -309,7 +319,8 @@ export default function AdminDashboard() {
           price: Number(editForm.price) || original.price,
           image: editForm.image || original.image,
           description: editForm.description || original.description,
-          badge: editForm.badge || undefined
+          badge: editForm.badge || undefined,
+          aromas: editForm.aromas && editForm.aromas.length > 0 ? editForm.aromas : original.aromas
         };
         updateProduct(updated);
         setEditingProductId(null);
@@ -332,7 +343,7 @@ export default function AdminDashboard() {
 
   // Filter orders by chosen status
   const filteredOrders = orders.filter((o) => {
-    if (orderFilter === 'all') return true;
+    if (orderFilter === 'all') return o.status !== 'completed';
     return o.status === orderFilter;
   });
 
@@ -462,7 +473,11 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="px-5 py-3 rounded-xl bg-[#EAFBF5] border border-emerald-100 text-[#1E3F37] font-black text-xs uppercase tracking-widest flex items-center gap-2">
+              <User className="w-4 h-4" />
+              {customerCount === null ? '—' : customerCount} client{customerCount === 1 ? '' : 's'}
+            </div>
             <button
               onClick={() => setShowResetConfirm(true)}
               className="px-5 py-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 font-extrabold text-xs uppercase tracking-widest flex items-center gap-2 transition-all border border-orange-200 shadow-xs"
@@ -565,6 +580,24 @@ export default function AdminDashboard() {
         {/* TAB 1: ORDERS INTERACTION AND VALIDATION CENTER */}
         {activeTab === 'orders' && (
           <div className="space-y-8 animate-fade-in text-left">
+
+            <div className="flex items-center justify-between">
+              <div>
+                {ordersError && (
+                  <p className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 inline-block">
+                    ⚠️ {ordersError}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={loadOrders}
+                disabled={ordersLoading}
+                className="px-4 py-2.5 rounded-xl bg-[#1E3F37] text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${ordersLoading ? 'animate-spin' : ''}`} />
+                {ordersLoading ? 'Actualisation...' : 'Actualiser les commandes'}
+              </button>
+            </div>
             
             {/* KPI STATS CARD ROW */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -572,7 +605,7 @@ export default function AdminDashboard() {
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Total Reçu</span>
                 <p className="text-2xl font-black text-gray-900 mt-1">{orders.length}</p>
                 <div className="text-[10px] text-gray-550 font-bold mt-1.5 flex items-center gap-1">
-                  <Inbox className="w-3.5 h-3.5 text-[#1E3F37]" /> Enregistrées en local
+                  <Inbox className="w-3.5 h-3.5 text-[#1E3F37]" /> Toutes commandes confondues
                 </div>
               </div>
 
@@ -1070,6 +1103,27 @@ export default function AdminDashboard() {
                             value={editForm.description}
                             onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                             className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30 focus:border-[#1E3F37] resize-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-black text-gray-400 tracking-wider flex items-center gap-1">
+                            🍃 Arômes disponibles (séparés par des virgules)
+                          </label>
+                          <input
+                            type="text"
+                            value={(editForm.aromas || []).join(', ')}
+                            placeholder="Ex : Fraise, Vanille, Mangue-Passion"
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                aromas: e.target.value
+                                  .split(',')
+                                  .map((a) => a.trim())
+                                  .filter((a) => a.length > 0),
+                              })
+                            }
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30 focus:border-[#1E3F37]"
                           />
                         </div>
 

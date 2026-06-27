@@ -6,6 +6,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
+// Cet email est réservé exclusivement à l'espace administrateur (/admin) et
+// ne peut jamais être utilisé pour créer un compte client.
+const RESERVED_ADMIN_EMAIL = 'axo.hossou@epitech.eu';
+
 export interface Customer {
   name: string;
   email: string;
@@ -36,6 +40,7 @@ interface UserContextType {
   logoutCustomer: () => Promise<void>;
   updateCustomerAddress: (address: string) => Promise<void>;
   deleteOwnAccount: () => Promise<AuthResult>;
+  updateCustomerProfile: (updates: { name?: string; phone?: string; email?: string }) => Promise<AuthResult>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -158,6 +163,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: "Veuillez remplir tous les champs obligatoires." };
     }
 
+    if (email.trim().toLowerCase() === RESERVED_ADMIN_EMAIL.toLowerCase()) {
+      return {
+        success: false,
+        error: "Cette adresse email est réservée et ne peut pas être utilisée pour un compte client.",
+      };
+    }
+
     const phoneValidation = validateBeninPhone(phone);
     if (!phoneValidation.isValid) {
       return { success: false, error: phoneValidation.message };
@@ -275,6 +287,60 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   };
 
+  const updateCustomerProfile = async (updates: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  }): Promise<AuthResult> => {
+    // Validation du téléphone si fourni
+    if (updates.phone) {
+      const phoneCheck = validateBeninPhone(updates.phone);
+      if (!phoneCheck.isValid) {
+        return { success: false, error: phoneCheck.message };
+      }
+      updates.phone = phoneCheck.formatted;
+    }
+
+    // Nom / téléphone : mise à jour immédiate des métadonnées, pas de vérification nécessaire.
+    const metaUpdates: Record<string, string> = {};
+    if (updates.name) metaUpdates.name = updates.name.trim();
+    if (updates.phone) metaUpdates.phone = updates.phone;
+
+    if (Object.keys(metaUpdates).length > 0) {
+      const { data, error } = await supabase.auth.updateUser({ data: metaUpdates });
+      if (error) {
+        return { success: false, error: mapSupabaseError(error.message) };
+      }
+      if (data.user) {
+        setCustomer(buildCustomerFromUser(data.user));
+      }
+    }
+
+    // Email : Supabase envoie un lien de confirmation à la NOUVELLE adresse
+    // (et, selon la config "Secure email change", aussi à l'ancienne) avant
+    // que le changement ne soit réellement appliqué — c'est la vérification.
+    if (updates.email && updates.email.trim().toLowerCase() !== customer?.email) {
+      if (updates.email.trim().toLowerCase() === RESERVED_ADMIN_EMAIL.toLowerCase()) {
+        return {
+          success: false,
+          error: "Cette adresse email est réservée et ne peut pas être utilisée pour un compte client.",
+        };
+      }
+      const { error: emailError } = await supabase.auth.updateUser({
+        email: updates.email.trim().toLowerCase(),
+      });
+      if (emailError) {
+        return { success: false, error: mapSupabaseError(emailError.message) };
+      }
+      return {
+        success: true,
+        needsEmailConfirmation: true, // on réutilise ce flag pour afficher "vérifiez votre boîte mail"
+      };
+    }
+
+    return { success: true };
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -286,6 +352,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         logoutCustomer,
         updateCustomerAddress,
         deleteOwnAccount,
+        updateCustomerProfile,
       }}
     >
       {children}

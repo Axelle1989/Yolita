@@ -55,6 +55,7 @@ export default function Confirmation() {
   const [clientComment, setClientComment] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [fetchError, setFetchError] = useState('');
 
   // Load orders on mount (Supabase RLS garantit qu'on ne reçoit QUE les
   // commandes appartenant à l'utilisateur connecté — sécurité par utilisateur)
@@ -65,21 +66,33 @@ export default function Confirmation() {
         .select('*')
         .order('created_at', { ascending: true });
 
-      if (error || !data) {
-        setOrders([]);
+      if (error) {
+        setFetchError(
+          "Impossible de charger vos commandes pour le moment. Vérifiez votre connexion et reconnectez-vous si besoin."
+        );
+        return;
+      }
+      if (!data) {
         return;
       }
 
       const list = data.map(mapDbOrder);
       setOrders(list);
 
+      // Une commande "terminée" (réception confirmée par le client après
+      // livraison) quitte le suivi actif par défaut — elle reste consultable
+      // via la recherche par numéro, mais ne s'affiche plus automatiquement.
+      const activeList = list.filter((o) => o.status !== 'completed');
+
       if (orderNumberFromState) {
         const found = list.find((o) => o.orderNumber === orderNumberFromState);
         if (found) {
           setActiveOrder(found);
         }
-      } else if (list.length > 0) {
-        setActiveOrder(list[list.length - 1]);
+      } else if (activeList.length > 0) {
+        setActiveOrder(activeList[activeList.length - 1]);
+      } else {
+        setActiveOrder(null);
       }
     })();
   }, [orderNumberFromState]);
@@ -177,6 +190,12 @@ export default function Confirmation() {
   return (
     <div className="pt-36 pb-24 bg-[#FAFAF8] min-h-screen">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {fetchError && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm font-bold rounded-2xl p-4 mb-8">
+            ⚠️ {fetchError}
+          </div>
+        )}
         
         {/* Intro Congratulation Banner (only shows when just checked out) */}
         {orderNumberFromState && (

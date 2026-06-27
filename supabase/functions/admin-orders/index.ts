@@ -45,6 +45,23 @@ Deno.serve(async (req: Request) => {
 
     const supabaseAdmin = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!);
 
+    if (action === 'countUsers') {
+      // listUsers ne renvoie pas un total direct sans pagination ; on parcourt
+      // les pages (perPage max) pour obtenir un compte exact même au-delà de
+      // la première page.
+      let total = 0;
+      let page = 1;
+      const perPage = 1000;
+      while (true) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+        if (error) return json({ success: false, error: error.message }, 500);
+        total += data.users.length;
+        if (data.users.length < perPage) break;
+        page += 1;
+      }
+      return json({ success: true, count: total });
+    }
+
     if (action === 'list') {
       const { data, error } = await supabaseAdmin
         .from('orders')

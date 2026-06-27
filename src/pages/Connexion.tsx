@@ -22,7 +22,9 @@ import {
   ShoppingBag,
   MailCheck,
   LogOut,
-  Trash2
+  Trash2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export default function Connexion() {
@@ -51,6 +53,8 @@ export default function Connexion() {
   const [resending, setResending] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
@@ -247,6 +251,13 @@ export default function Connexion() {
               className="w-full bg-[#1E3F37] text-white py-3.5 px-6 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[#1E3F37]/90 transition-all shadow-md flex items-center justify-center gap-2"
             >
               Procéder à la commande <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            <Link
+              to="/profil"
+              className="w-full bg-white border border-gray-200 text-gray-600 py-3 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+            >
+              <User className="w-3.5 h-3.5" /> Modifier mon profil
             </Link>
 
             <button
@@ -467,14 +478,22 @@ export default function Connexion() {
                       <Lock className="w-4 h-4" />
                     </span>
                     <input 
-                      type="password" 
+                      type={showSignupPassword ? 'text' : 'password'} 
                       required
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="6 caractères minimum"
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30 focus:border-[#1E3F37] transition-all"
+                      className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30 focus:border-[#1E3F37] transition-all"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPassword((v) => !v)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                      tabIndex={-1}
+                    >
+                      {showSignupPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -539,13 +558,21 @@ export default function Connexion() {
                       <Lock className="w-4 h-4" />
                     </span>
                     <input 
-                      type="password" 
+                      type={showLoginPassword ? 'text' : 'password'} 
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Votre mot de passe"
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
+                      className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword((v) => !v)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                      tabIndex={-1}
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                   {needsConfirmationLogin && (
                     <button

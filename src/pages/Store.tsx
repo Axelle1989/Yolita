@@ -61,7 +61,7 @@ export default function Store() {
             </div>
             <div className="hidden md:block">
               <img 
-                src="https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&q=80&w=600" 
+                src="/images/expedition-fraicheur.jpeg" 
                 alt="Livraison Fraîcheur" 
                 className="rounded-[32px] shadow-lg border-4 border-white rotate-2 hover:rotate-0 transition-transform duration-500 aspect-square object-cover"
                 referrerPolicy="no-referrer"

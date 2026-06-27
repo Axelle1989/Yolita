@@ -62,13 +62,42 @@ export default function Checkout() {
   const deliveryFee = cartTotal >= DELIVERY_FEES.THRESHOLD_FREE ? 0 : DELIVERY_FEES[locationType];
   const finalTotal = cartTotal + deliveryFee;
 
+  const [geoStatus, setGeoStatus] = useState<'idle' | 'locating' | 'live' | 'denied'>('idle');
+
+  // Localisation en temps réel : dès que le client arrive sur la page de
+  // commande, on suit sa position GPS en continu (watchPosition), pas juste
+  // une seule fois. Le pin sur la carte se déplace automatiquement s'il bouge.
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    setGeoStatus('locating');
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setMarkerPos([pos.coords.latitude, pos.coords.longitude]);
+        setGeoStatus('live');
+      },
+      () => {
+        setGeoStatus('denied');
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
   const handleGeolocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setMarkerPos([pos.coords.latitude, pos.coords.longitude]);
-      }, () => {
-        alert("Géolocalisation refusée ou indisponible. Vous pouvez cliquer sur la carte.");
-      });
+      setGeoStatus('locating');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setMarkerPos([pos.coords.latitude, pos.coords.longitude]);
+          setGeoStatus('live');
+        },
+        () => {
+          setGeoStatus('denied');
+          alert("Géolocalisation refusée ou indisponible. Vous pouvez cliquer sur la carte.");
+        }
+      );
     }
   };
 
@@ -281,7 +310,7 @@ export default function Checkout() {
 
                 <div className="space-y-6">
                   <div>
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex justify-between items-center mb-2">
                       <label className="block text-xs font-black uppercase text-gray-400">Position de livraison</label>
                       <button 
                         type="button"
@@ -291,6 +320,24 @@ export default function Checkout() {
                         <Navigation className="w-3 h-3 mr-1" />
                         Ma position actuelle
                       </button>
+                    </div>
+                    <div className="mb-4">
+                      {geoStatus === 'live' && (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                          Position en direct (mise à jour automatique)
+                        </span>
+                      )}
+                      {geoStatus === 'locating' && (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+                          Localisation en cours...
+                        </span>
+                      )}
+                      {geoStatus === 'denied' && (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-gray-500 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-1">
+                          Géolocalisation refusée — ajustez le pin manuellement sur la carte
+                        </span>
+                      )}
                     </div>
                     <div className="h-64 w-full rounded-[32px] overflow-hidden border-4 border-white shadow-sm relative z-0">
                       <MapContainer center={markerPos} zoom={12} style={{ height: '100%', width: '100%' }}>
