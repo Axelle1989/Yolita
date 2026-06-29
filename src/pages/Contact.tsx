@@ -10,7 +10,7 @@ import { Mail, Phone, MapPin, Heart, Send } from 'lucide-react';
 export default function Contact() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Merci ! Votre message a bien été envoyé. L\'équipe Yolita vous répondra dans les plus brefs délais.');
+    alert('Merci ! Votre message a bien été envoyé. L\'équipe Aliyota vous répondra dans les plus brefs délais.');
   };
 
   return (
@@ -110,7 +110,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs uppercase tracking-widest text-mint-dark mb-1">Écrivez-nous</h4>
-                  <p className="text-gray-900 font-bold text-sm">hello@yolita.bj</p>
+                  <p className="text-gray-900 font-bold text-sm">hello@aliyota.bj</p>
                   <p className="text-gray-500 font-medium text-xs mt-1">Notre équipe d'onctuosité vous répond sous 24h.</p>
                 </div>
               </div>
@@ -129,12 +129,12 @@ export default function Contact() {
 
             {/* Map/Illustration Placeholder */}
             <div className="w-full aspect-video bg-primary-light rounded-[40px] overflow-hidden relative border-4 border-white shadow-lg flex items-center justify-center p-6">
-              <div className="absolute inset-0 yolita-pattern opacity-10"></div>
+              <div className="absolute inset-0 aliyota-pattern opacity-10"></div>
               <div className="relative text-center space-y-3 z-10 max-w-sm">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto text-xl shadow-sm">
                   🌸
                 </div>
-                <h4 className="font-extrabold text-gray-900 font-sans">Yolita — Conçu au Bénin 🇧🇯</h4>
+                <h4 className="font-extrabold text-gray-900 font-sans">Aliyota — Conçu au Bénin 🇧🇯</h4>
                 <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
                   Des ingrédients de première fraîcheur collectés avec le plus grand soin auprès de producteurs locaux engagés pour une qualité onctueuse et saine.
                 </p>

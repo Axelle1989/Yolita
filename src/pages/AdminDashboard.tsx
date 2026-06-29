@@ -175,7 +175,7 @@ export default function AdminDashboard() {
         setError(data?.error || 'Identifiants admin incorrects. Réessayez.');
       } else {
         setIsLoggedIn(true);
-        triggerToast('Connexion réussie ! Bienvenue Espace Admin Yolita.');
+        triggerToast('Connexion réussie ! Bienvenue Espace Admin Aliyota.');
       }
     } catch (err) {
       setError('Impossible de vérifier vos identifiants pour le moment. Réessayez.');
@@ -190,7 +190,7 @@ export default function AdminDashboard() {
   };
 
   const validateOrder = async (orderNum: string) => {
-    const defaultMsg = "Votre yaourt moussé Yolita est en cours de brassage traditionnel ! Notre livreur se prépare.";
+    const defaultMsg = "Votre yaourt moussé Aliyota est en cours de brassage traditionnel ! Notre livreur se prépare.";
     const messageToSend = validationMessage.trim() || defaultMsg;
 
     const target = orders.find((o) => o.orderNumber === orderNum) as any;
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
       {
         status: 'delivered' as const,
         date: now,
-        comment: "Colis confié au service d'expédition express Yolita pour livraison immédiate.",
+        comment: "Colis confié au service d'expédition express Aliyota pour livraison immédiate.",
       },
     ];
 
@@ -366,7 +366,7 @@ export default function AdminDashboard() {
             <div className="absolute top-4 left-4 bg-white/10 w-9 h-9 rounded-full flex items-center justify-center">
               <span className="text-xl">🇧🇯</span>
             </div>
-            <h1 className="text-3xl font-black uppercase tracking-tight">Yolita Admin</h1>
+            <h1 className="text-3xl font-black uppercase tracking-tight">Aliyota Admin</h1>
             <p className="text-xs font-semibold text-emerald-100 mt-1">Gérez le catalogue et traitez les commandes</p>
           </div>
 
@@ -465,10 +465,10 @@ export default function AdminDashboard() {
                 <span className="text-[10px] font-black uppercase text-accent bg-accent/10 px-2.5 py-0.5 rounded-md border border-accent/20">
                   Mode Administrateur
                 </span>
-                <span className="text-xs text-gray-400 font-bold">{email || 'Admin Yolita'}</span>
+                <span className="text-xs text-gray-400 font-bold">{email || 'Admin Aliyota'}</span>
               </div>
               <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight mt-1">
-                Espace de Gestion Yolita 🇧🇯
+                Espace de Gestion Aliyota 🇧🇯
               </h1>
             </div>
           </div>
@@ -885,9 +885,9 @@ export default function AdminDashboard() {
                             <label className="text-[9px] font-black uppercase text-gray-400">Modèles de réponse express :</label>
                             <div className="flex flex-wrap gap-1.5">
                               {[
-                                "Votre yaourt moussé Yolita est validé à l'atelier ! Brassage des fruits locaux démarré.",
+                                "Votre yaourt moussé Aliyota est validé à l'atelier ! Brassage des fruits locaux démarré.",
                                 "Excellente recette choisie ! Vos pots de yaourts artisanaux sont prêts, le livreur arrive.",
-                                "Standard Yolita : Commande validée pour le Bénin court-circuit. Nous arrivons !"
+                                "Standard Aliyota : Commande validée pour le Bénin court-circuit. Nous arrivons !"
                               ].map((mText, mIdx) => (
                                 <button
                                   key={mIdx}
@@ -922,7 +922,7 @@ export default function AdminDashboard() {
                       {selectedOrder.status === 'validated' && (
                         <div className="space-y-4 text-left">
                           <p className="text-xs text-gray-500 font-medium leading-relaxed">
-                            <span className="font-extrabold text-blue-600">Étape 2 : Livraison physique.</span> Les bocaux thermiques Yolita sont moussés et assemblés avec soin. Confiez le paquet au livreur.
+                            <span className="font-extrabold text-blue-600">Étape 2 : Livraison physique.</span> Les bocaux thermiques Aliyota sont moussés et assemblés avec soin. Confiez le paquet au livreur.
                           </p>
 
                           <div className="bg-[#EAFBF5] p-3 rounded-xl border border-emerald-150 text-[11px] text-[#1E3F37] font-semibold italic">
@@ -1207,7 +1207,7 @@ export default function AdminDashboard() {
 }
 
 // ---------------------------------------------------------------------------
-// Éditeur des options de composition du yaourt ("Compose ton Yolita")
+// Éditeur des options de composition du yaourt ("Compose ton Aliyota")
 // Permet à l'admin de modifier les capacités, les bases et les arômes/prix.
 // ---------------------------------------------------------------------------
 function CompositionEditor({
@@ -1299,14 +1299,14 @@ function CompositionEditor({
           ))}
         </div>
         <p className="text-[10px] text-gray-400 font-bold mt-3">
-          "Coeff." multiplie le prix de base du produit pour ce format. "Prix DIY" est le prix de départ pour le yaourt personnalisé (compose ton Yolita) à ce format.
+          "Coeff." multiplie le prix de base du produit pour ce format. "Prix DIY" est le prix de départ pour le yaourt personnalisé (compose ton Aliyota) à ce format.
         </p>
       </section>
 
       {/* BASES */}
       <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Bases (Compose ton Yolita)</h3>
+          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Bases (Compose ton Aliyota)</h3>
           <div className="flex gap-2">
             <button onClick={addBase} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-widest">
               + Ajouter
@@ -1344,7 +1344,7 @@ function CompositionEditor({
       {/* ARÔMES */}
       <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Arômes / Fruits (Compose ton Yolita)</h3>
+          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Arômes / Fruits (Compose ton Aliyota)</h3>
           <div className="flex gap-2">
             <button onClick={addAroma} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-widest">
               + Ajouter

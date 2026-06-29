@@ -21,10 +21,10 @@ export default function Store() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-5xl font-black mb-6 uppercase tracking-tight text-gray-900"
           >
-            La Gamme Yolita
+            La Gamme Aliyota
           </motion.h1>
           <p className="text-xl text-gray-500 font-medium leading-relaxed">
-            Chaque pot Yolita est préparé avec amour avec du bon lait bio, des fruits frais soigneusement sélectionnés et zéro sucre ajouté.
+            Chaque pot Aliyota est préparé avec amour avec du bon lait bio, des fruits frais soigneusement sélectionnés et zéro sucre ajouté.
           </p>
         </header>
 
@@ -37,7 +37,7 @@ export default function Store() {
         </section>
 
         <section className="mt-24 p-12 bg-primary-light border-4 border-primary/40 rounded-[40px] text-gray-800 overflow-hidden relative shadow-sm">
-          <div className="absolute top-0 right-0 w-64 h-64 yolita-pattern opacity-10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 aliyota-pattern opacity-10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="text-left">
               <h2 className="text-3xl font-black mb-6 uppercase tracking-tighter text-primary-dark">Expédition & Fraîcheur</h2>

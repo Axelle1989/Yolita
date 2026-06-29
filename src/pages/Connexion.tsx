@@ -109,7 +109,7 @@ export default function Connexion() {
       if (res.needsEmailConfirmation) {
         setAwaitingConfirmation(email.trim().toLowerCase());
       } else {
-        setSuccessMsg("Votre compte client Yolita a été créé avec succès ! Bienvenue ! 🎉");
+        setSuccessMsg("Votre compte client Aliyota a été créé avec succès ! Bienvenue ! 🎉");
         setTimeout(() => {
           navigate(redirectPath);
         }, 1500);
@@ -177,7 +177,7 @@ export default function Connexion() {
             Confirmez votre email
           </h2>
           <p className="text-sm text-gray-500 font-semibold mt-3 leading-relaxed">
-            Nous avons envoyé un lien de confirmation à <strong className="text-gray-800">{awaitingConfirmation}</strong>. Cliquez sur ce lien pour activer votre compte Yolita, puis revenez vous connecter.
+            Nous avons envoyé un lien de confirmation à <strong className="text-gray-800">{awaitingConfirmation}</strong>. Cliquez sur ce lien pour activer votre compte Aliyota, puis revenez vous connecter.
           </p>
 
           {successMsg && (
@@ -229,7 +229,7 @@ export default function Connexion() {
             🇧🇯
           </div>
           <span className="text-[10px] font-black uppercase text-accent bg-accent/15 px-3 py-1 rounded-md border border-accent/20">
-            Compte Client Yolita actif
+            Compte Client Aliyota actif
           </span>
           <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tight mt-4">
             Bonjour, {customer.name} !
@@ -312,10 +312,10 @@ export default function Connexion() {
     <div className="pt-36 pb-24 bg-gradient-to-br from-[#FAFAF5] to-[#eaece6] min-h-screen flex items-center justify-center px-4">
       <div className="max-w-xl w-full">
         
-        {/* Yolita Brand Greeting */}
+        {/* Aliyota Brand Greeting */}
         <div className="text-center mb-8">
           <span className="text-3xl block filter drop-shadow-sm mb-3">🌸</span>
-          <h2 className="text-3xl font-black uppercase tracking-tight text-gray-900">Espace Client Yolita</h2>
+          <h2 className="text-3xl font-black uppercase tracking-tight text-gray-900">Espace Client Aliyota</h2>
           <p className="text-xs font-bold text-gray-550 uppercase tracking-widest mt-1">
             Produits laitiers & yaourts moussés artisanaux béninois
           </p>
@@ -394,7 +394,7 @@ export default function Connexion() {
                 
                 {/* Information Header */}
                 <div className="bg-[#FAFAF6] rounded-2xl p-4 border border-gray-150 text-xs text-gray-600 leading-relaxed font-semibold">
-                  🌿 <span className="font-extrabold text-[#1E3F37]">Directives Yolita :</span> Un compte client est indispensable pour passer commande. Votre numéro béninois doit impérativement débuter par <strong className="text-[#1E3F37]">01</strong> conformément au plan de numérotation national mobile en vigueur !
+                  🌿 <span className="font-extrabold text-[#1E3F37]">Directives Aliyota :</span> Un compte client est indispensable pour passer commande. Votre numéro béninois doit impérativement débuter par <strong className="text-[#1E3F37]">01</strong> conformément au plan de numérotation national mobile en vigueur !
                 </div>
 
                 {/* Nom */}

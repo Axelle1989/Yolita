@@ -25,7 +25,7 @@ export default function CartPage() {
             <ShoppingBag className="w-12 h-12 text-primary-dark opacity-40" />
           </div>
           <h1 className="text-3xl font-black mb-4 uppercase tracking-tighter text-gray-900">Votre panier est vide</h1>
-          <p className="text-gray-500 mb-10 font-medium">Il semble que vous n'ayez pas encore choisi vos délicieux yaourts bio Yolita.</p>
+          <p className="text-gray-500 mb-10 font-medium">Il semble que vous n'ayez pas encore choisi vos délicieux yaourts bio Aliyota.</p>
           <Link
             to="/produits"
             className="inline-flex items-center bg-primary-dark text-white px-10 py-5 rounded-full font-extrabold uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl shadow-primary/20 animate-bounce"
@@ -124,7 +124,7 @@ export default function CartPage() {
           {/* Summary */}
           <div className="lg:col-span-1">
             <div className="bg-cart-bg p-8 rounded-[32px] shadow-sm border border-border-subtle sticky top-32 overflow-hidden text-left">
-              <div className="absolute top-0 right-0 w-32 h-32 yolita-pattern opacity-5 -translate-y-1/2 translate-x-1/2 rounded-full"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 aliyota-pattern opacity-5 -translate-y-1/2 translate-x-1/2 rounded-full"></div>
               <h2 className="text-2xl font-black mb-8 uppercase tracking-tight relative z-10 text-gray-900">Récapitulatif</h2>
               
               <div className="space-y-4 mb-8 relative z-10">

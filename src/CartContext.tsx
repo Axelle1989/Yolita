@@ -72,7 +72,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : `Arôme ${aroma}`;
         finalProduct = {
           id: `diy-${Date.now()}`,
-          name: `Yaourt Récré Yolita (Création)`,
+          name: `Yaourt Récré Aliyota (Création)`,
           price: diyDetails.price,
           description: `Base ${diyDetails.base}, ${fruitsStr}, ${diyDetails.isSweetened ? 'Sucré' : 'Non sucré'}.`,
           image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=600',

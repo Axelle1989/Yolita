@@ -169,7 +169,7 @@ export default function Checkout() {
     return null;
   }
 
-  // Mandatory Authentication Interceptor for Yolita ordering
+  // Mandatory Authentication Interceptor for Aliyota ordering
   if (!customer) {
     return (
       <div className="pt-36 pb-24 bg-gradient-to-br from-[#FAFAF5] to-[#eaece6] min-h-screen flex items-center justify-center px-4">
@@ -188,7 +188,7 @@ export default function Checkout() {
             Compte client requis
           </h2>
           <p className="text-sm text-gray-500 font-semibold mt-3 leading-relaxed">
-            Pour finaliser votre commande de yaourts artisanaux Yolita, veuillez vous connecter ou créer un compte client en quelques secondes. 
+            Pour finaliser votre commande de yaourts artisanaux Aliyota, veuillez vous connecter ou créer un compte client en quelques secondes. 
           </p>
 
           <div className="mt-6 bg-[#FAFAF6] rounded-2xl p-4 border border-gray-150 text-xs text-left text-gray-600 space-y-2 font-semibold">
@@ -416,7 +416,7 @@ export default function Checkout() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-cart-bg p-8 rounded-[40px] shadow-sm border border-border-subtle sticky top-32 overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 yolita-pattern opacity-5 -translate-y-1/2 translate-x-1/2 rounded-full"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 aliyota-pattern opacity-5 -translate-y-1/2 translate-x-1/2 rounded-full"></div>
               <h2 className="text-2xl font-black mb-8 uppercase tracking-tight relative z-10 text-gray-900">Récapitulatif</h2>
               <ul className="space-y-5 mb-8 relative z-10">
                 {cart.map((item) => (

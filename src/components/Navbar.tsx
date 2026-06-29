@@ -28,7 +28,7 @@ export default function Navbar() {
         <div className="flex justify-between h-20 items-center">
           <Link to="/" className="flex items-center space-x-2">
             <span className="text-3xl font-black text-primary-dark tracking-tighter flex items-center">
-              🌸 Yolita
+              🌸 Aliyota
             </span>
           </Link>
 

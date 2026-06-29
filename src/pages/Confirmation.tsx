@@ -139,7 +139,7 @@ export default function Confirmation() {
           : "Le client a validé la réception finale et achevé sa commande avec succès ! 🎉",
       },
     ];
-    const finalClientMessage = clientComment.trim() || 'Commande reçue parfaitement, merci Yolita !';
+    const finalClientMessage = clientComment.trim() || 'Commande reçue parfaitement, merci Aliyota !';
 
     const { error } = await supabase
       .from('orders')
@@ -310,7 +310,7 @@ export default function Confirmation() {
                       ) : (
                         <div className="mt-3 bg-[#F0F7F5] rounded-3xl p-4 border border-emerald-150 relative">
                           <p className="text-xs text-emerald-800 font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                            💬 Message envoyé par Yolita :
+                            💬 Message envoyé par Aliyota :
                           </p>
                           <p className="text-xs font-semibold text-gray-700 leading-relaxed italic bg-white/70 p-3 rounded-xl border border-white">
                             "{activeOrder.adminMessage || 'Votre commande a été validée avec succès ! Les mélanges de yaourts moussés s\'annoncent merveilleux. Nous lançons la livraison.'}"
@@ -408,7 +408,7 @@ export default function Confirmation() {
                           rows={2}
                           value={clientComment}
                           onChange={(e) => setClientComment(e.target.value)}
-                          placeholder="Ex: Yaourt mangue et coco incroyable ! Livraison très rapide, merci Yolita."
+                          placeholder="Ex: Yaourt mangue et coco incroyable ! Livraison très rapide, merci Aliyota."
                           className="w-full bg-white border border-gray-250 p-3 rounded-xl text-xs font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30 focus:border-[#1E3F37]"
                         />
                       </div>
@@ -559,11 +559,11 @@ export default function Confirmation() {
             {/* Assistance Card */}
             <div className="bg-[#1E3F37] text-white rounded-[32px] p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-x-1/2 -translate-y-1/2"></div>
-              <h4 className="font-extrabold uppercase text-xs tracking-widest text-accent mb-2">Service Client Yolita</h4>
+              <h4 className="font-extrabold uppercase text-xs tracking-widest text-accent mb-2">Service Client Aliyota</h4>
               <p className="text-xs text-emerald-100 font-medium leading-relaxed mb-4">
                 Une question sur la livraison pour de bon ou pour modifier un arôme de votre bocal ? Contactez notre standard :
               </p>
-              <p className="font-extrabold text-sm tracking-tight text-white">📧 contact@yolita.fr</p>
+              <p className="font-extrabold text-sm tracking-tight text-white">📧 contact@aliyota.fr</p>
             </div>
 
           </div>

@@ -77,7 +77,7 @@ export default function SidebarCart() {
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary"></div>
               <div>
                 <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-                  🌸 Votre panier Yolita
+                  🌸 Votre panier Aliyota
                 </h3>
                 <p className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mt-0.5">
                   Fraîcheur & Onctuosité locale
@@ -145,7 +145,7 @@ export default function SidebarCart() {
                   </div>
 
                   <div className="bg-primary-light/50 p-4 rounded-xl border border-primary/20 text-[10px] text-gray-550 leading-relaxed font-semibold italic text-left">
-                    🌱 Merci pour votre achat ! Votre yaourt frais Yolita est à présent de route sous température dirigée. Portez-vous bien !
+                    🌱 Merci pour votre achat ! Votre yaourt frais Aliyota est à présent de route sous température dirigée. Portez-vous bien !
                   </div>
 
                   <button
@@ -165,7 +165,7 @@ export default function SidebarCart() {
                 >
                   <h4 className="text-lg font-black text-gray-900 uppercase tracking-tight">Détails de simulation</h4>
                   <p className="text-xs text-gray-500 leading-relaxed">
-                    Saisissez vos coordonnées de livraison ci-dessous pour simuler instantanément la finalisation de votre commande Yolita.
+                    Saisissez vos coordonnées de livraison ci-dessous pour simuler instantanément la finalisation de votre commande Aliyota.
                   </p>
                   
                   <div className="space-y-4">
