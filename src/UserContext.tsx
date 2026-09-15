@@ -10,6 +10,8 @@ import { supabase } from './supabaseClient';
 // ne peut jamais être utilisé pour créer un compte client.
 const RESERVED_ADMIN_EMAIL = 'axo.hossou@epitech.eu';
 
+export type BuyerType = 'gros' | 'detail';
+
 export interface Customer {
   name: string;
   email: string;
@@ -17,6 +19,7 @@ export interface Customer {
   address?: string;
   dateCreated: string;
   emailConfirmed: boolean;
+  buyerType: BuyerType;
 }
 
 interface AuthResult {
@@ -33,6 +36,7 @@ interface UserContextType {
     email: string,
     phone: string,
     password: string,
+    buyerType: BuyerType,
     address?: string
   ) => Promise<AuthResult>;
   loginCustomer: (email: string, password: string) => Promise<AuthResult>;
@@ -123,7 +127,8 @@ function buildCustomerFromUser(user: any): Customer {
     phone: meta.phone || '',
     address: meta.address || '',
     dateCreated: user.created_at || new Date().toISOString(),
-    emailConfirmed: !!user.email_confirmed_at
+    emailConfirmed: !!user.email_confirmed_at,
+    buyerType: meta.buyerType === 'gros' ? 'gros' : 'detail'
   };
 }
 
@@ -157,10 +162,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     email: string,
     phone: string,
     password: string,
+    buyerType: BuyerType,
     address?: string
   ): Promise<AuthResult> => {
     if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       return { success: false, error: "Veuillez remplir tous les champs obligatoires." };
+    }
+
+    if (buyerType !== 'gros' && buyerType !== 'detail') {
+      return { success: false, error: "Veuillez préciser si vous achetez en gros ou en détail." };
     }
 
     if (email.trim().toLowerCase() === RESERVED_ADMIN_EMAIL.toLowerCase()) {
@@ -186,7 +196,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         data: {
           name: name.trim(),
           phone: phoneValidation.formatted,
-          address: address?.trim() || ''
+          address: address?.trim() || '',
+          buyerType
         }
       }
     });
