@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useUser, validateBeninPhone } from '../UserContext';
+import { useUser, validateBeninPhone, BuyerType } from '../UserContext';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
   User, 
@@ -42,6 +42,7 @@ export default function Connexion() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [address, setAddress] = useState('');
+  const [buyerType, setBuyerType] = useState<BuyerType>('detail');
   
   // Custom states for messages
   const [errorMsg, setErrorMsg] = useState('');
@@ -102,7 +103,7 @@ export default function Connexion() {
     }
 
     setSubmitting(true);
-    const res = await registerCustomer(name, email, phone, password, address);
+    const res = await registerCustomer(name, email, phone, password, buyerType, address);
     setSubmitting(false);
 
     if (res.success) {
@@ -468,6 +469,41 @@ export default function Connexion() {
                       {phoneHelp.isValid ? '✓' : '⚠️'} {phoneHelp.message}
                     </p>
                   )}
+                </div>
+
+                {/* Type d'acheteur : gros ou détail */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Vous achetez *</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setBuyerType('detail')}
+                      className={`py-3 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-wide transition-all ${
+                        buyerType === 'detail'
+                          ? 'border-[#1E3F37] bg-[#1E3F37]/5 text-[#1E3F37]'
+                          : 'border-gray-200 text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      En détail
+                      <span className="block text-[9px] font-semibold normal-case tracking-normal mt-0.5 text-gray-400">
+                        Pour ma consommation
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBuyerType('gros')}
+                      className={`py-3 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-wide transition-all ${
+                        buyerType === 'gros'
+                          ? 'border-[#1E3F37] bg-[#1E3F37]/5 text-[#1E3F37]'
+                          : 'border-gray-200 text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      En gros
+                      <span className="block text-[9px] font-semibold normal-case tracking-normal mt-0.5 text-gray-400">
+                        Revente / professionnel
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Mot de passe */}
