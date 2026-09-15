@@ -101,17 +101,45 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
     loadConfig();
   }, [loadConfig]);
 
+  // Écoute les changements en direct (fait par l'admin depuis un autre onglet/appareil)
+  // et met à jour tous les visiteurs sans qu'ils aient besoin de recharger la page.
+  useEffect(() => {
+    const channel = supabase
+      .channel('site_config_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_config', filter: `id=eq.${ROW_ID}` },
+        (payload) => {
+          const remote = ((payload.new as any)?.data || {}) as Partial<SiteConfigData>;
+          setConfig({
+            products: remote.products && remote.products.length > 0 ? remote.products : INITIAL_PRODUCTS,
+            capacities: remote.capacities && remote.capacities.length > 0 ? remote.capacities : INITIAL_CAPACITIES,
+            diyBases: remote.diyBases && remote.diyBases.length > 0 ? remote.diyBases : INITIAL_DIY_BASES,
+            diyAromas: remote.diyAromas && remote.diyAromas.length > 0 ? remote.diyAromas : INITIAL_DIY_AROMAS,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const persist = async (next: SiteConfigData) => {
     setSaving(true);
-    setConfig(next);
     const { error: saveError } = await supabase
       .from('site_config')
       .upsert({ id: ROW_ID, data: next, updated_at: new Date().toISOString() });
     setSaving(false);
     if (saveError) {
-      setError("Erreur lors de la sauvegarde sur Supabase. Vérifiez que la table 'site_config' existe.");
+      // On ne met PAS à jour l'affichage si Supabase a refusé l'écriture —
+      // sinon l'admin croit que c'est enregistré alors que ça ne l'est pas.
+      setError("Erreur lors de la sauvegarde sur Supabase. Vérifiez que la table 'site_config' existe et que les règles RLS autorisent l'écriture.");
       throw saveError;
     }
+    // Succès confirmé par Supabase : on peut mettre à jour l'affichage local.
+    setConfig(next);
     setError(null);
   };
 
