@@ -72,6 +72,33 @@ Deno.serve(async (req: Request) => {
       return json({ success: true, orders: data });
     }
 
+    if (action === 'listCustomers') {
+      // Parcourt toutes les pages pour renvoyer la liste complète des comptes créés.
+      let users: any[] = [];
+      let page = 1;
+      const perPage = 1000;
+      while (true) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+        if (error) return json({ success: false, error: error.message }, 500);
+        users = users.concat(data.users);
+        if (data.users.length < perPage) break;
+        page += 1;
+      }
+
+      const customers = users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        name: u.user_metadata?.name || '',
+        phone: u.user_metadata?.phone || '',
+        address: u.user_metadata?.address || '',
+        buyerType: u.user_metadata?.buyerType === 'gros' ? 'gros' : 'detail',
+        dateCreated: u.created_at,
+        emailConfirmed: !!u.email_confirmed_at,
+      }));
+
+      return json({ success: true, customers });
+    }
+
     if (action === 'updateStatus') {
       const { orderId, status, statusHistory, adminMessage } = body;
       const { error } = await supabaseAdmin
