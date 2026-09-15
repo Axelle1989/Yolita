@@ -62,7 +62,13 @@ export default function AdminDashboard() {
   // Une reconnexion à chaque ouverture de /admin est le compromis le plus sûr.
 
   // Active view: 'orders' or 'products'
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition' | 'customers'>('orders');
+
+  // Comptes clients (gros / détail)
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersError, setCustomersError] = useState('');
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<'all' | 'gros' | 'detail'>('all');
 
   // Orders list and filtering
   const [orders, setOrders] = useState<Order[]>([]);
@@ -137,10 +143,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadCustomers = async () => {
+    setCustomersLoading(true);
+    setCustomersError('');
+    try {
+      const data = await callAdminOrders({ action: 'listCustomers' });
+      setCustomers(data.customers || []);
+    } catch (err: any) {
+      setCustomersError(err.message || 'Impossible de charger les comptes clients.');
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
   // Load orders once logged in
   useEffect(() => {
     if (isLoggedIn) {
       loadOrders();
+      loadCustomers();
       (async () => {
         try {
           const data = await callAdminOrders({ action: 'countUsers' });
@@ -532,6 +552,21 @@ export default function AdminDashboard() {
             }`}
           >
             <Sparkles className="w-4 h-4" /> Composition (Bases / Arômes / Formats)
+          </button>
+          <button
+            onClick={() => setActiveTab('customers')}
+            className={`px-6 py-4 font-black uppercase text-xs tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'customers' 
+                ? 'border-[#1E3F37] text-[#1E3F37]' 
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <User className="w-4 h-4" /> Comptes Clients
+            {customers.length > 0 && (
+              <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {customers.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1199,6 +1234,98 @@ export default function AdminDashboard() {
             onSaveBases={updateDiyBases}
             onSaveAromas={updateDiyAromas}
           />
+        )}
+
+        {activeTab === 'customers' && (
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">
+                Comptes Clients ({customers.length})
+              </h3>
+              <div className="flex items-center gap-2">
+                {(['all', 'detail', 'gros'] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setCustomerTypeFilter(f)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                      customerTypeFilter === f
+                        ? 'bg-[#1E3F37] text-white border-[#1E3F37]'
+                        : 'bg-white text-gray-500 border-gray-200'
+                    }`}
+                  >
+                    {f === 'all' ? 'Tous' : f === 'gros' ? 'Gros' : 'Détail'}
+                  </button>
+                ))}
+                <button
+                  onClick={loadCustomers}
+                  disabled={customersLoading}
+                  className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-200 text-gray-500 flex items-center gap-1 disabled:opacity-60"
+                >
+                  <RefreshCw className={`w-3 h-3 ${customersLoading ? 'animate-spin' : ''}`} /> Actualiser
+                </button>
+              </div>
+            </div>
+
+            {customersError && (
+              <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl p-4">
+                ⚠️ {customersError}
+              </div>
+            )}
+
+            {customersLoading && customers.length === 0 ? (
+              <p className="text-xs text-gray-400 font-semibold">Chargement des comptes…</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-left text-[10px] uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                      <th className="py-2 pr-4">Nom</th>
+                      <th className="py-2 pr-4">Email</th>
+                      <th className="py-2 pr-4">Téléphone</th>
+                      <th className="py-2 pr-4">Type</th>
+                      <th className="py-2 pr-4">Inscrit le</th>
+                      <th className="py-2 pr-4">Email confirmé</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customers
+                      .filter((c) => customerTypeFilter === 'all' || c.buyerType === customerTypeFilter)
+                      .map((c) => (
+                        <tr key={c.id} className="border-b border-gray-50">
+                          <td className="py-2.5 pr-4 font-bold text-gray-800">{c.name || '—'}</td>
+                          <td className="py-2.5 pr-4 text-gray-600">{c.email}</td>
+                          <td className="py-2.5 pr-4 text-gray-600">{c.phone || '—'}</td>
+                          <td className="py-2.5 pr-4">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                c.buyerType === 'gros'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {c.buyerType === 'gros' ? 'Gros' : 'Détail'}
+                            </span>
+                          </td>
+                          <td className="py-2.5 pr-4 text-gray-500">
+                            {new Date(c.dateCreated).toLocaleDateString('fr-FR')}
+                          </td>
+                          <td className="py-2.5 pr-4">
+                            {c.emailConfirmed ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Clock className="w-3.5 h-3.5 text-amber-500" />
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+                {customers.length === 0 && !customersLoading && (
+                  <p className="text-xs text-gray-400 font-semibold py-4">Aucun compte client pour le moment.</p>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
       </div>
