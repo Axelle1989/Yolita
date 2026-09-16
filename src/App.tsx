@@ -38,6 +38,8 @@ function CustomerLayout({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const isBuyerSpace =
+    location.pathname.startsWith('/tableau-de-bord') || location.pathname.startsWith('/facture');
 
   if (isAdmin) {
     // L'espace admin a sa propre interface, totalement séparée du site client
@@ -45,6 +47,17 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/admin" element={<AdminDashboard />} />
+      </Routes>
+    );
+  }
+
+  if (isBuyerSpace) {
+    // L'espace acheteur est lui aussi une interface détachée du site vitrine :
+    // pas de Navbar/Footer public, juste son propre en-tête + menu latéral.
+    return (
+      <Routes>
+        <Route path="/tableau-de-bord" element={<BuyerSpace />} />
+        <Route path="/facture/:orderId" element={<Facture />} />
       </Routes>
     );
   }
@@ -59,8 +72,6 @@ function AppRoutes() {
         <Route path="/commander" element={<Checkout />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/connexion" element={<Connexion />} />
-        <Route path="/tableau-de-bord" element={<BuyerSpace />} />
-        <Route path="/facture/:orderId" element={<Facture />} />
         <Route path="/profil" element={<Profil />} />
       </Routes>
     </CustomerLayout>

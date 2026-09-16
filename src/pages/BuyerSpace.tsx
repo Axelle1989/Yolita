@@ -4,7 +4,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { LogOut, ExternalLink } from 'lucide-react';
 import { useUser } from '../UserContext';
 import { useFavorites } from '../FavoritesContext';
 import { supabase } from '../supabaseClient';
@@ -48,7 +49,7 @@ interface QuoteRow {
 }
 
 export default function BuyerSpace() {
-  const { customer, loading } = useUser();
+  const { customer, loading, logoutCustomer } = useUser();
   const { favoriteIds } = useFavorites();
   const navigate = useNavigate();
 
@@ -147,18 +148,43 @@ export default function BuyerSpace() {
   };
 
   return (
-    <div className="pt-32 pb-24 bg-[#FAFAF8] min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <BuyerSidebar
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            buyerType={customer.buyerType}
-            favoritesCount={favoriteIds.length}
-            pendingQuotesCount={pendingQuotesCount}
-            unreadNotificationsCount={0}
-          />
-          <div className="flex-1 min-w-0">{renderView()}</div>
+    <div className="min-h-screen bg-[#FAFAF8]">
+      {/* En-tête propre à l'espace acheteur — interface détachée du site vitrine */}
+      <header className="bg-[#1E3F37] text-white sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <Link to="/tableau-de-bord" className="flex items-center gap-2 font-black tracking-tight text-lg">
+            🌸 Yolita <span className="text-[10px] font-black uppercase tracking-widest text-white/50 hidden sm:inline">Espace Acheteur</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <a
+              href="/"
+              className="text-[11px] font-black uppercase tracking-widest text-white/70 hover:text-white flex items-center gap-1.5"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Voir le site</span>
+            </a>
+            <button
+              onClick={logoutCustomer}
+              className="text-[11px] font-black uppercase tracking-widest text-white/70 hover:text-white flex items-center gap-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="pt-8 pb-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <BuyerSidebar
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              buyerType={customer.buyerType}
+              favoritesCount={favoriteIds.length}
+              pendingQuotesCount={pendingQuotesCount}
+              unreadNotificationsCount={0}
+            />
+            <div className="flex-1 min-w-0">{renderView()}</div>
+          </div>
         </div>
       </div>
     </div>

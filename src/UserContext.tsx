@@ -195,6 +195,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       email: email.trim().toLowerCase(),
       password,
       options: {
+        // Une fois le lien de confirmation cliqué, l'acheteur atterrit
+        // directement sur son tableau de bord plutôt que sur l'accueil.
+        emailRedirectTo: `${window.location.origin}/tableau-de-bord`,
         data: {
           name: name.trim(),
           phone: phoneValidation.formatted,
@@ -235,6 +238,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: "Veuillez saisir votre email et votre mot de passe." };
     }
 
+    if (email.trim().toLowerCase() === RESERVED_ADMIN_EMAIL.toLowerCase()) {
+      return {
+        success: false,
+        error: "Cette adresse est réservée à l'administration. Utilisez l'espace Admin (/admin) pour vous connecter.",
+      };
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password
@@ -255,7 +265,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const resendConfirmationEmail = async (email: string): Promise<AuthResult> => {
     const { error } = await supabase.auth.resend({
       type: 'signup',
-      email: email.trim().toLowerCase()
+      email: email.trim().toLowerCase(),
+      options: {
+        emailRedirectTo: `${window.location.origin}/tableau-de-bord`,
+      }
     });
     if (error) {
       return { success: false, error: mapSupabaseError(error.message) };

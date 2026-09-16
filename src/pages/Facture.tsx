@@ -58,7 +58,7 @@ export default function Facture() {
   if (!customer) return null;
 
   return (
-    <div className="pt-32 pb-24 bg-[#FAFAF8] min-h-screen print:pt-0 print:bg-white">
+    <div className="pt-10 pb-24 bg-[#FAFAF8] min-h-screen print:pt-0 print:bg-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between mb-6 print:hidden">
           <Link to="/tableau-de-bord" className="inline-flex items-center gap-1.5 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-600">
