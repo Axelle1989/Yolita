@@ -31,7 +31,7 @@ export default function Connexion() {
   const { customer, registerCustomer, loginCustomer, resendConfirmationEmail, logoutCustomer, deleteOwnAccount } = useUser();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/';
+  const redirectPath = searchParams.get('redirect') || '/tableau-de-bord';
 
   // Active form view: 'login' or 'signup'
   const [activeForm, setActiveForm] = useState<'login' | 'signup'>('signup');

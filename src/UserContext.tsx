@@ -13,6 +13,7 @@ const RESERVED_ADMIN_EMAIL = 'axo.hossou@epitech.eu';
 export type BuyerType = 'gros' | 'detail';
 
 export interface Customer {
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -122,6 +123,7 @@ function mapSupabaseError(message: string): string {
 function buildCustomerFromUser(user: any): Customer {
   const meta = user.user_metadata || {};
   return {
+    id: user.id,
     name: meta.name || '',
     email: user.email || '',
     phone: meta.phone || '',

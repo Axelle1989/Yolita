@@ -288,8 +288,8 @@ export default function Home() {
                   className="rounded-[40px] overflow-hidden aspect-square shadow-lg border-4 border-accent/20"
                 >
                   <img 
-                    src="/images/aliyota-pots-bocaux.jpeg" 
-                    alt="Pots de yaourt Aliyota en bocaux" 
+                    src="/images/aliyota-pots-empiles.jpeg" 
+                    alt="Pots de yaourt Aliyota empilés" 
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />

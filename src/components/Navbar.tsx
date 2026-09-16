@@ -58,7 +58,7 @@ export default function Navbar() {
             {customer ? (
               <div className="flex items-center space-x-4 border-l pl-6 border-gray-150">
                 <Link 
-                  to="/connexion" 
+                  to="/tableau-de-bord" 
                   className="text-xs font-black uppercase text-primary-dark tracking-wider flex items-center gap-1 hover:opacity-85"
                 >
                   <User className="w-4 h-4 text-accent" />
@@ -148,7 +148,7 @@ export default function Navbar() {
                 {customer ? (
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl">
                     <Link
-                      to="/connexion"
+                      to="/tableau-de-bord"
                       onClick={() => setIsOpen(false)}
                       className="text-sm font-extrabold text-[#1E3F37] flex items-center gap-1.5"
                     >

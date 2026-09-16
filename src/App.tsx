@@ -19,6 +19,7 @@ import Checkout from './pages/Checkout';
 import Confirmation from './pages/Confirmation';
 import AdminDashboard from './pages/AdminDashboard';
 import Connexion from './pages/Connexion';
+import Dashboard from './pages/Dashboard';
 import Profil from './pages/Profil';
 
 function CustomerLayout({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ function AppRoutes() {
         <Route path="/commander" element={<Checkout />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/connexion" element={<Connexion />} />
+        <Route path="/tableau-de-bord" element={<Dashboard />} />
         <Route path="/profil" element={<Profil />} />
       </Routes>
     </CustomerLayout>
