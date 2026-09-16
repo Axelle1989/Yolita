@@ -8,6 +8,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './CartContext';
 import { SiteConfigProvider } from './SiteConfigContext';
 import { UserProvider } from './UserContext';
+import { FavoritesProvider } from './FavoritesContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SidebarCart from './components/SidebarCart';
@@ -19,7 +20,8 @@ import Checkout from './pages/Checkout';
 import Confirmation from './pages/Confirmation';
 import AdminDashboard from './pages/AdminDashboard';
 import Connexion from './pages/Connexion';
-import Dashboard from './pages/Dashboard';
+import BuyerSpace from './pages/BuyerSpace';
+import Facture from './pages/Facture';
 import Profil from './pages/Profil';
 
 function CustomerLayout({ children }: { children: React.ReactNode }) {
@@ -57,7 +59,8 @@ function AppRoutes() {
         <Route path="/commander" element={<Checkout />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/connexion" element={<Connexion />} />
-        <Route path="/tableau-de-bord" element={<Dashboard />} />
+        <Route path="/tableau-de-bord" element={<BuyerSpace />} />
+        <Route path="/facture/:orderId" element={<Facture />} />
         <Route path="/profil" element={<Profil />} />
       </Routes>
     </CustomerLayout>
@@ -68,9 +71,11 @@ export default function App() {
   return (
     <SiteConfigProvider>
       <UserProvider>
-        <CartProvider>
-          <AppRoutes />
-        </CartProvider>
+        <FavoritesProvider>
+          <CartProvider>
+            <AppRoutes />
+          </CartProvider>
+        </FavoritesProvider>
       </UserProvider>
     </SiteConfigProvider>
   );

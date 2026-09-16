@@ -21,10 +21,10 @@ export default function Store() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-5xl font-black mb-6 uppercase tracking-tight text-gray-900"
           >
-            La Gamme Aliyota
+            La Gamme Yolita
           </motion.h1>
           <p className="text-xl text-gray-500 font-medium leading-relaxed">
-            Chaque pot Aliyota est préparé avec amour avec du bon lait bio, des fruits frais soigneusement sélectionnés et zéro sucre ajouté.
+            Chaque pot Yolita est préparé avec amour avec du bon lait bio, des fruits frais soigneusement sélectionnés et zéro sucre ajouté.
           </p>
         </header>
 

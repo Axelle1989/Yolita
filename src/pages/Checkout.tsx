@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useCart } from '../CartContext';
 import { useUser } from '../UserContext';
+import { useSiteConfig } from '../SiteConfigContext';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { DELIVERY_FEES } from '../constants';
@@ -45,6 +46,7 @@ function LocationMarker({ position, setPosition }: { position: [number, number],
 export default function Checkout() {
   const { cart, cartTotal, clearCart } = useCart();
   const { customer, updateCustomerAddress } = useUser();
+  const { config } = useSiteConfig();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [locationType, setLocationType] = useState<'COTONOU' | 'OUTSIDE'>('COTONOU'); // mapped to Standard vs Express
@@ -60,7 +62,10 @@ export default function Checkout() {
   }, [customer]);
 
   const deliveryFee = cartTotal >= DELIVERY_FEES.THRESHOLD_FREE ? 0 : DELIVERY_FEES[locationType];
-  const finalTotal = cartTotal + deliveryFee;
+  const isGrosBuyer = customer?.buyerType === 'gros';
+  const grosDiscountPercent = isGrosBuyer ? (config.grosDiscountPercent || 0) : 0;
+  const grosDiscountAmount = Math.round((cartTotal * grosDiscountPercent) / 100);
+  const finalTotal = cartTotal - grosDiscountAmount + deliveryFee;
 
   const [geoStatus, setGeoStatus] = useState<'idle' | 'locating' | 'live' | 'denied'>('idle');
 
@@ -169,7 +174,7 @@ export default function Checkout() {
     return null;
   }
 
-  // Mandatory Authentication Interceptor for Aliyota ordering
+  // Mandatory Authentication Interceptor for Yolita ordering
   if (!customer) {
     return (
       <div className="pt-36 pb-24 bg-gradient-to-br from-[#FAFAF5] to-[#eaece6] min-h-screen flex items-center justify-center px-4">
@@ -188,7 +193,7 @@ export default function Checkout() {
             Compte client requis
           </h2>
           <p className="text-sm text-gray-500 font-semibold mt-3 leading-relaxed">
-            Pour finaliser votre commande de yaourts artisanaux Aliyota, veuillez vous connecter ou créer un compte client en quelques secondes. 
+            Pour finaliser votre commande de yaourts artisanaux Yolita, veuillez vous connecter ou créer un compte client en quelques secondes. 
           </p>
 
           <div className="mt-6 bg-[#FAFAF6] rounded-2xl p-4 border border-gray-150 text-xs text-left text-gray-600 space-y-2 font-semibold">
@@ -465,6 +470,12 @@ export default function Checkout() {
                   <span>Sous-total</span>
                   <span className="text-gray-900 font-black">{cartTotal.toLocaleString('fr-FR')} FCFA</span>
                 </div>
+                {grosDiscountAmount > 0 && (
+                  <div className="flex justify-between text-amber-700 text-xs font-bold uppercase tracking-wider">
+                    <span>Remise grossiste (-{grosDiscountPercent}%)</span>
+                    <span className="font-black">-{grosDiscountAmount.toLocaleString('fr-FR')} FCFA</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-500 text-xs font-bold uppercase tracking-wider">
                   <span>Frais de Livraison</span>
                   <span className="text-gray-900 font-black text-right">

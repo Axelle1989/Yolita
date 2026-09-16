@@ -8,7 +8,7 @@ import { Product } from './types';
 export const PRODUCTS: Product[] = [
   {
     id: 'aliyota-fraise',
-    name: 'Aliyota Fraise Sauvage',
+    name: 'Yolita Fraise Sauvage',
     price: 1500,
     description: 'Une onctuosité incomparable mariée aux éclats de fraises des bois bio cultivées localement.',
     image: '/images/aliyota-fraise.jpeg',
@@ -18,7 +18,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'aliyota-framboise',
-    name: 'Aliyota Framboise & Rose',
+    name: 'Yolita Framboise & Rose',
     price: 1800,
     description: 'Une recette subtile mêlant framboises de saison gorgées de soleil et un délicat soupçon d\'eau de rose bio.',
     image: '/images/aliyota-framboise.jpeg',
@@ -28,7 +28,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'aliyota-nature',
-    name: 'Aliyota Velouté Nature',
+    name: 'Yolita Velouté Nature',
     price: 1200,
     description: 'Le goût pur d\'un yaourt brassé bio, issu de lait de pâturage sain, incroyablement doux et crémeux.',
     image: '/images/aliyota-nature.jpeg',
@@ -37,7 +37,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'aliyota-menthe',
-    name: 'Aliyota Menthe Douce',
+    name: 'Yolita Menthe Douce',
     price: 1500,
     description: 'La fraîcheur végétale inédite de feuilles de menthe douce doucement infusées dans notre crème de yaourt.',
     image: '/images/aliyota-menthe.jpeg',
@@ -57,7 +57,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'pack-famille',
-    name: 'La Collection Aliyota (6 pots)',
+    name: 'La Collection Yolita (6 pots)',
     price: 8000,
     description: 'Notre collection d\'onctuosité : 2 Fraise, 2 Framboise Rose, 1 Menthe Douce et 1 Velouté Nature. Idéal pour partager.',
     image: '/images/pack-famille.jpeg',

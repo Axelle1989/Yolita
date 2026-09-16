@@ -32,6 +32,7 @@ interface SiteConfigData {
   capacities: CapacityOption[];
   diyBases: DiyBase[];
   diyAromas: DiyAroma[];
+  grosDiscountPercent: number;
 }
 
 const DEFAULT_CONFIG: SiteConfigData = {
@@ -39,6 +40,7 @@ const DEFAULT_CONFIG: SiteConfigData = {
   capacities: INITIAL_CAPACITIES,
   diyBases: INITIAL_DIY_BASES,
   diyAromas: INITIAL_DIY_AROMAS,
+  grosDiscountPercent: 10,
 };
 
 interface SiteConfigContextType {
@@ -50,6 +52,7 @@ interface SiteConfigContextType {
   updateCapacities: (capacities: CapacityOption[]) => Promise<void>;
   updateDiyBases: (bases: DiyBase[]) => Promise<void>;
   updateDiyAromas: (aromas: DiyAroma[]) => Promise<void>;
+  updateGrosDiscount: (percent: number) => Promise<void>;
   resetAll: () => Promise<void>;
 }
 
@@ -85,6 +88,7 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
       capacities: remote.capacities && remote.capacities.length > 0 ? remote.capacities : INITIAL_CAPACITIES,
       diyBases: remote.diyBases && remote.diyBases.length > 0 ? remote.diyBases : INITIAL_DIY_BASES,
       diyAromas: remote.diyAromas && remote.diyAromas.length > 0 ? remote.diyAromas : INITIAL_DIY_AROMAS,
+      grosDiscountPercent: typeof remote.grosDiscountPercent === 'number' ? remote.grosDiscountPercent : DEFAULT_CONFIG.grosDiscountPercent,
     };
 
     setConfig(merged);
@@ -116,6 +120,7 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
             capacities: remote.capacities && remote.capacities.length > 0 ? remote.capacities : INITIAL_CAPACITIES,
             diyBases: remote.diyBases && remote.diyBases.length > 0 ? remote.diyBases : INITIAL_DIY_BASES,
             diyAromas: remote.diyAromas && remote.diyAromas.length > 0 ? remote.diyAromas : INITIAL_DIY_AROMAS,
+            grosDiscountPercent: typeof remote.grosDiscountPercent === 'number' ? remote.grosDiscountPercent : DEFAULT_CONFIG.grosDiscountPercent,
           });
         }
       )
@@ -163,13 +168,17 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
     await persist({ ...config, diyAromas });
   };
 
+  const updateGrosDiscount = async (percent: number) => {
+    await persist({ ...config, grosDiscountPercent: percent });
+  };
+
   const resetAll = async () => {
     await persist(DEFAULT_CONFIG);
   };
 
   return (
     <SiteConfigContext.Provider
-      value={{ config, loading, saving, error, updateProduct, updateCapacities, updateDiyBases, updateDiyAromas, resetAll }}
+      value={{ config, loading, saving, error, updateProduct, updateCapacities, updateDiyBases, updateDiyAromas, updateGrosDiscount, resetAll }}
     >
       {children}
     </SiteConfigContext.Provider>

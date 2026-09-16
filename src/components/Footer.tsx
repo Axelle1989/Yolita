@@ -15,7 +15,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-1 md:col-span-1">
             <h3 className="text-3xl font-black mb-6 uppercase tracking-tighter flex items-center gap-2 text-white">
-              🌸 Aliyota
+              🌸 Yolita
             </h3>
             <p className="text-primary-light/80 mb-6 leading-relaxed text-sm font-medium">
               Le yaourt biologique et de jeunesse, fait avec passion. Une douceur crémeuse, saine et éco-responsable pour régaler les papilles de toute la famille.
@@ -55,7 +55,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 mr-3 text-accent shrink-0" />
-                <span>hello@aliyota.bj</span>
+                <span>hello@yolita.bj</span>
               </li>
             </ul>
           </div>
@@ -74,7 +74,7 @@ export default function Footer() {
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
           <p className="text-primary-light/60 font-medium">
-            © {new Date().getFullYear()} Aliyota. Fait avec amour et onctuosité au Bénin 🇧🇯
+            © {new Date().getFullYear()} Yolita. Fait avec amour et onctuosité au Bénin 🇧🇯
           </p>
           <div className="flex space-x-6 text-primary-light/60 font-bold uppercase tracking-wider">
             <span>MTN MoMo, Moov Money, CB</span>

@@ -6,9 +6,11 @@
 import React, { useState } from 'react';
 import { Product } from '../types';
 import { useCart } from '../CartContext';
-import { ShoppingCart, Check, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Check, Plus, Minus, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useSiteConfig } from '../SiteConfigContext';
+import { useUser } from '../UserContext';
+import { useFavorites } from '../FavoritesContext';
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +19,8 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { config } = useSiteConfig();
+  const { customer } = useUser();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const CAPACITIES = config.capacities;
   const [quantity, setQuantity] = useState(1);
   const [selectedAroma, setSelectedAroma] = useState(product.aromas?.[0] || 'Nature');
@@ -43,6 +47,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       className="product-card group bg-white rounded-[24px] p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-border-subtle text-center flex flex-col"
     >
       <div className="relative mb-6">
+        {customer && (
+          <button
+            onClick={() => toggleFavorite(product.id)}
+            className={`absolute top-0 right-0 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-sm ${
+              isFavorite(product.id)
+                ? 'bg-rose-500 text-white'
+                : 'bg-white/90 text-gray-400 hover:text-rose-500'
+            }`}
+            title={isFavorite(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          >
+            <Heart className="w-4 h-4" fill={isFavorite(product.id) ? 'currentColor' : 'none'} />
+          </button>
+        )}
         {product.badge && (
           <span className="bg-primary/20 text-primary-dark text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">
             {product.badge}

@@ -44,7 +44,7 @@ import { Product, Order, StatusHistoryItem } from '../types';
 import { supabase } from '../supabaseClient';
 
 export default function AdminDashboard() {
-  const { config, updateProduct, updateCapacities, updateDiyBases, updateDiyAromas, resetAll, saving, error: configError } = useSiteConfig();
+  const { config, updateProduct, updateCapacities, updateDiyBases, updateDiyAromas, updateGrosDiscount, resetAll, saving, error: configError } = useSiteConfig();
   const products = config.products;
   const resetProducts = resetAll;
   
@@ -62,13 +62,20 @@ export default function AdminDashboard() {
   // Une reconnexion à chaque ouverture de /admin est le compromis le plus sûr.
 
   // Active view: 'orders' or 'products'
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition' | 'customers'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition' | 'customers' | 'quotes'>('orders');
 
   // Comptes clients (gros / détail)
   const [customers, setCustomers] = useState<any[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState('');
   const [customerTypeFilter, setCustomerTypeFilter] = useState<'all' | 'gros' | 'detail'>('all');
+
+  // Demandes de devis (acheteurs en gros)
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [quotesError, setQuotesError] = useState('');
+  const [respondingQuoteId, setRespondingQuoteId] = useState<string | null>(null);
+  const [quoteResponseDrafts, setQuoteResponseDrafts] = useState<Record<string, { price: string; message: string }>>({});
 
   // Orders list and filtering
   const [orders, setOrders] = useState<Order[]>([]);
@@ -156,11 +163,43 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadQuotes = async () => {
+    setQuotesLoading(true);
+    setQuotesError('');
+    try {
+      const data = await callAdminOrders({ action: 'listQuotes' });
+      setQuotes(data.quotes || []);
+    } catch (err: any) {
+      setQuotesError(err.message || 'Impossible de charger les demandes de devis.');
+    } finally {
+      setQuotesLoading(false);
+    }
+  };
+
+  const submitQuoteResponse = async (quoteId: string) => {
+    const draft = quoteResponseDrafts[quoteId] || { price: '', message: '' };
+    setRespondingQuoteId(quoteId);
+    try {
+      await callAdminOrders({
+        action: 'respondQuote',
+        quoteId,
+        adminResponse: draft.message,
+        adminPrice: draft.price ? parseFloat(draft.price) : null,
+      });
+      await loadQuotes();
+    } catch (err: any) {
+      setQuotesError(err.message || "Impossible d'envoyer la réponse.");
+    } finally {
+      setRespondingQuoteId(null);
+    }
+  };
+
   // Load orders once logged in
   useEffect(() => {
     if (isLoggedIn) {
       loadOrders();
       loadCustomers();
+      loadQuotes();
       (async () => {
         try {
           const data = await callAdminOrders({ action: 'countUsers' });
@@ -195,7 +234,7 @@ export default function AdminDashboard() {
         setError(data?.error || 'Identifiants admin incorrects. Réessayez.');
       } else {
         setIsLoggedIn(true);
-        triggerToast('Connexion réussie ! Bienvenue Espace Admin Aliyota.');
+        triggerToast('Connexion réussie ! Bienvenue Espace Admin Yolita.');
       }
     } catch (err) {
       setError('Impossible de vérifier vos identifiants pour le moment. Réessayez.');
@@ -210,7 +249,7 @@ export default function AdminDashboard() {
   };
 
   const validateOrder = async (orderNum: string) => {
-    const defaultMsg = "Votre yaourt moussé Aliyota est en cours de brassage traditionnel ! Notre livreur se prépare.";
+    const defaultMsg = "Votre yaourt moussé Yolita est en cours de brassage traditionnel ! Notre livreur se prépare.";
     const messageToSend = validationMessage.trim() || defaultMsg;
 
     const target = orders.find((o) => o.orderNumber === orderNum) as any;
@@ -260,7 +299,7 @@ export default function AdminDashboard() {
       {
         status: 'delivered' as const,
         date: now,
-        comment: "Colis confié au service d'expédition express Aliyota pour livraison immédiate.",
+        comment: "Colis confié au service d'expédition express Yolita pour livraison immédiate.",
       },
     ];
 
@@ -386,7 +425,7 @@ export default function AdminDashboard() {
             <div className="absolute top-4 left-4 bg-white/10 w-9 h-9 rounded-full flex items-center justify-center">
               <span className="text-xl">🇧🇯</span>
             </div>
-            <h1 className="text-3xl font-black uppercase tracking-tight">Aliyota Admin</h1>
+            <h1 className="text-3xl font-black uppercase tracking-tight">Yolita Admin</h1>
             <p className="text-xs font-semibold text-emerald-100 mt-1">Gérez le catalogue et traitez les commandes</p>
           </div>
 
@@ -485,10 +524,10 @@ export default function AdminDashboard() {
                 <span className="text-[10px] font-black uppercase text-accent bg-accent/10 px-2.5 py-0.5 rounded-md border border-accent/20">
                   Mode Administrateur
                 </span>
-                <span className="text-xs text-gray-400 font-bold">{email || 'Admin Aliyota'}</span>
+                <span className="text-xs text-gray-400 font-bold">{email || 'Admin Yolita'}</span>
               </div>
               <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight mt-1">
-                Espace de Gestion Aliyota 🇧🇯
+                Espace de Gestion Yolita 🇧🇯
               </h1>
             </div>
           </div>
@@ -565,6 +604,21 @@ export default function AdminDashboard() {
             {customers.length > 0 && (
               <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 {customers.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('quotes')}
+            className={`px-6 py-4 font-black uppercase text-xs tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'quotes' 
+                ? 'border-[#1E3F37] text-[#1E3F37]' 
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" /> Devis
+            {quotes.filter((q) => q.status === 'pending').length > 0 && (
+              <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {quotes.filter((q) => q.status === 'pending').length}
               </span>
             )}
           </button>
@@ -920,9 +974,9 @@ export default function AdminDashboard() {
                             <label className="text-[9px] font-black uppercase text-gray-400">Modèles de réponse express :</label>
                             <div className="flex flex-wrap gap-1.5">
                               {[
-                                "Votre yaourt moussé Aliyota est validé à l'atelier ! Brassage des fruits locaux démarré.",
+                                "Votre yaourt moussé Yolita est validé à l'atelier ! Brassage des fruits locaux démarré.",
                                 "Excellente recette choisie ! Vos pots de yaourts artisanaux sont prêts, le livreur arrive.",
-                                "Standard Aliyota : Commande validée pour le Bénin court-circuit. Nous arrivons !"
+                                "Standard Yolita : Commande validée pour le Bénin court-circuit. Nous arrivons !"
                               ].map((mText, mIdx) => (
                                 <button
                                   key={mIdx}
@@ -957,7 +1011,7 @@ export default function AdminDashboard() {
                       {selectedOrder.status === 'validated' && (
                         <div className="space-y-4 text-left">
                           <p className="text-xs text-gray-500 font-medium leading-relaxed">
-                            <span className="font-extrabold text-blue-600">Étape 2 : Livraison physique.</span> Les bocaux thermiques Aliyota sont moussés et assemblés avec soin. Confiez le paquet au livreur.
+                            <span className="font-extrabold text-blue-600">Étape 2 : Livraison physique.</span> Les bocaux thermiques Yolita sont moussés et assemblés avec soin. Confiez le paquet au livreur.
                           </p>
 
                           <div className="bg-[#EAFBF5] p-3 rounded-xl border border-emerald-150 text-[11px] text-[#1E3F37] font-semibold italic">
@@ -1230,9 +1284,11 @@ export default function AdminDashboard() {
             capacities={config.capacities}
             diyBases={config.diyBases}
             diyAromas={config.diyAromas}
+            grosDiscountPercent={config.grosDiscountPercent}
             onSaveCapacities={updateCapacities}
             onSaveBases={updateDiyBases}
             onSaveAromas={updateDiyAromas}
+            onSaveGrosDiscount={updateGrosDiscount}
           />
         )}
 
@@ -1328,33 +1384,131 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {activeTab === 'quotes' && (
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">
+                Demandes de Devis ({quotes.length})
+              </h3>
+              <button
+                onClick={loadQuotes}
+                disabled={quotesLoading}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-200 text-gray-500 flex items-center gap-1 disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3 h-3 ${quotesLoading ? 'animate-spin' : ''}`} /> Actualiser
+              </button>
+            </div>
+
+            {quotesError && (
+              <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl p-4">
+                ⚠️ {quotesError}
+              </div>
+            )}
+
+            {quotesLoading && quotes.length === 0 ? (
+              <p className="text-xs text-gray-400 font-semibold">Chargement des devis…</p>
+            ) : quotes.length === 0 ? (
+              <p className="text-xs text-gray-400 font-semibold py-4">Aucune demande de devis pour le moment.</p>
+            ) : (
+              <div className="space-y-4">
+                {quotes.map((q) => {
+                  const draft = quoteResponseDrafts[q.id] || {
+                    price: q.admin_price != null ? String(q.admin_price) : '',
+                    message: q.admin_response || '',
+                  };
+                  return (
+                    <div key={q.id} className="border border-gray-100 rounded-2xl p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                          <p className="text-sm font-black text-gray-800">{q.client_name || q.client_email}</p>
+                          <p className="text-[11px] text-gray-400 font-semibold">
+                            {q.client_email} · {new Date(q.created_at).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                            q.status === 'answered' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {q.status === 'answered' ? 'Répondu' : 'En attente'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-700 font-semibold bg-gray-50 rounded-xl p-3 mb-3">
+                        {q.message}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr_auto] gap-2">
+                        <input
+                          type="number"
+                          placeholder="Prix proposé (FCFA)"
+                          value={draft.price}
+                          onChange={(e) =>
+                            setQuoteResponseDrafts((prev) => ({
+                              ...prev,
+                              [q.id]: { ...draft, price: e.target.value },
+                            }))
+                          }
+                          className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Message de réponse"
+                          value={draft.message}
+                          onChange={(e) =>
+                            setQuoteResponseDrafts((prev) => ({
+                              ...prev,
+                              [q.id]: { ...draft, message: e.target.value },
+                            }))
+                          }
+                          className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
+                        />
+                        <button
+                          onClick={() => submitQuoteResponse(q.id)}
+                          disabled={respondingQuoteId === q.id}
+                          className="px-4 py-2 rounded-lg bg-[#1E3F37] text-white text-xs font-black uppercase tracking-widest disabled:opacity-60"
+                        >
+                          {respondingQuoteId === q.id ? '...' : 'Répondre'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Éditeur des options de composition du yaourt ("Compose ton Aliyota")
+// Éditeur des options de composition du yaourt ("Compose ton Yolita")
 // Permet à l'admin de modifier les capacités, les bases et les arômes/prix.
 // ---------------------------------------------------------------------------
 function CompositionEditor({
   capacities,
   diyBases,
   diyAromas,
+  grosDiscountPercent,
   onSaveCapacities,
   onSaveBases,
   onSaveAromas,
+  onSaveGrosDiscount,
 }: {
   capacities: import('../constants').CapacityOption[];
   diyBases: import('../SiteConfigContext').DiyBase[];
   diyAromas: import('../SiteConfigContext').DiyAroma[];
+  grosDiscountPercent: number;
   onSaveCapacities: (v: import('../constants').CapacityOption[]) => Promise<void>;
   onSaveBases: (v: import('../SiteConfigContext').DiyBase[]) => Promise<void>;
   onSaveAromas: (v: import('../SiteConfigContext').DiyAroma[]) => Promise<void>;
+  onSaveGrosDiscount: (percent: number) => Promise<void>;
 }) {
   const [localCapacities, setLocalCapacities] = useState(capacities);
   const [localBases, setLocalBases] = useState(diyBases);
   const [localAromas, setLocalAromas] = useState(diyAromas);
+  const [localGrosDiscount, setLocalGrosDiscount] = useState(grosDiscountPercent);
   const [savingSection, setSavingSection] = useState<string | null>(null);
 
   const updateCapField = (index: number, field: keyof typeof localCapacities[0], value: string | number) => {
@@ -1392,6 +1546,42 @@ function CompositionEditor({
 
   return (
     <div className="space-y-10">
+      {/* REMISE GROSSISTE */}
+      <section className="bg-amber-50 rounded-3xl border border-amber-200 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-amber-900">
+            Prix Grossiste Automatique
+          </h3>
+          <button
+            onClick={async () => {
+              setSavingSection('grosDiscount');
+              await onSaveGrosDiscount(localGrosDiscount);
+              setSavingSection(null);
+            }}
+            disabled={savingSection === 'grosDiscount'}
+            className="px-4 py-2 rounded-lg bg-amber-900 text-white text-xs font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-60"
+          >
+            <Save className="w-3.5 h-3.5" /> {savingSection === 'grosDiscount' ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
+        <p className="text-xs text-amber-800 font-semibold mb-3">
+          Remise appliquée automatiquement sur le sous-total à la commande pour tout compte classé
+          "acheteur en gros". Mets 0 pour désactiver.
+        </p>
+        <div className="flex items-center gap-2 max-w-xs">
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            value={localGrosDiscount}
+            onChange={(e) => setLocalGrosDiscount(parseFloat(e.target.value) || 0)}
+            className={inputClass}
+          />
+          <span className="text-sm font-black text-amber-900">%</span>
+        </div>
+      </section>
+
       {/* CAPACITÉS */}
       <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
@@ -1426,14 +1616,14 @@ function CompositionEditor({
           ))}
         </div>
         <p className="text-[10px] text-gray-400 font-bold mt-3">
-          "Coeff." multiplie le prix de base du produit pour ce format. "Prix DIY" est le prix de départ pour le yaourt personnalisé (compose ton Aliyota) à ce format.
+          "Coeff." multiplie le prix de base du produit pour ce format. "Prix DIY" est le prix de départ pour le yaourt personnalisé (compose ton Yolita) à ce format.
         </p>
       </section>
 
       {/* BASES */}
       <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Bases (Compose ton Aliyota)</h3>
+          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Bases (Compose ton Yolita)</h3>
           <div className="flex gap-2">
             <button onClick={addBase} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-widest">
               + Ajouter
@@ -1471,7 +1661,7 @@ function CompositionEditor({
       {/* ARÔMES */}
       <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Arômes / Fruits (Compose ton Aliyota)</h3>
+          <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">Arômes / Fruits (Compose ton Yolita)</h3>
           <div className="flex gap-2">
             <button onClick={addAroma} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-widest">
               + Ajouter

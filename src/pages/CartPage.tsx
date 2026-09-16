@@ -25,7 +25,7 @@ export default function CartPage() {
             <ShoppingBag className="w-12 h-12 text-primary-dark opacity-40" />
           </div>
           <h1 className="text-3xl font-black mb-4 uppercase tracking-tighter text-gray-900">Votre panier est vide</h1>
-          <p className="text-gray-500 mb-10 font-medium">Il semble que vous n'ayez pas encore choisi vos délicieux yaourts bio Aliyota.</p>
+          <p className="text-gray-500 mb-10 font-medium">Il semble que vous n'ayez pas encore choisi vos délicieux yaourts bio Yolita.</p>
           <Link
             to="/produits"
             className="inline-flex items-center bg-primary-dark text-white px-10 py-5 rounded-full font-extrabold uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl shadow-primary/20 animate-bounce"

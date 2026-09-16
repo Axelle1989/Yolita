@@ -73,7 +73,6 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === 'listCustomers') {
-      // Parcourt toutes les pages pour renvoyer la liste complète des comptes créés.
       let users: any[] = [];
       let page = 1;
       const perPage = 1000;
@@ -97,6 +96,32 @@ Deno.serve(async (req: Request) => {
       }));
 
       return json({ success: true, customers });
+    }
+
+    if (action === 'listQuotes') {
+      const { data, error } = await supabaseAdmin
+        .from('quote_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) return json({ success: false, error: error.message }, 500);
+      return json({ success: true, quotes: data });
+    }
+
+    if (action === 'respondQuote') {
+      const { quoteId, adminResponse, adminPrice } = body;
+      const { error } = await supabaseAdmin
+        .from('quote_requests')
+        .update({
+          admin_response: adminResponse,
+          admin_price: adminPrice ?? null,
+          status: 'answered',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', quoteId);
+
+      if (error) return json({ success: false, error: error.message }, 500);
+      return json({ success: true });
     }
 
     if (action === 'updateStatus') {

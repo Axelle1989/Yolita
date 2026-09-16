@@ -62,7 +62,7 @@ export default function Home() {
     const isMixed = diyFruits.length > 1;
     const virtualProduct = {
       id: 'diy-yogurt',
-      name: isMixed ? `Aliyota Duo/Mixte Tropical` : `Mon Yaourt Récré Aliyota`,
+      name: isMixed ? `Yolita Duo/Mixte Tropical` : `Mon Yaourt Récré Yolita`,
       price: singleDiyPrice,
       description: `Création personnalisée : Base ${diyBase.name}, fruits : ${fruitsStr}, ${diyIsSweet ? 'légèrement sucré au miel' : 'sans sucre ajouté (nature)'}.`,
       image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=600',
@@ -88,7 +88,7 @@ export default function Home() {
   };
 
   const testimonials = [
-    { name: 'Koffi', location: 'Cotonou', text: 'Une texture onctueuse divine et un vrai goût de fruit frais. Aliyota, c\'est mon plaisir sain après le travail ou le sport !', stars: 5, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200' },
+    { name: 'Koffi', location: 'Cotonou', text: 'Une texture onctueuse divine et un vrai goût de fruit frais. Yolita, c\'est mon plaisir sain après le travail ou le sport !', stars: 5, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200' },
     { name: 'Sena', location: 'Calavi', text: 'J\'adore le fait qu\'il n\'y ait aucun sucre ajouté. Mes enfants l\'adorent pour le goûter, c\'est ultra frais, léger et très sain.', stars: 5, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200' },
     { name: 'Farida', location: 'Parakou', text: 'Une douceur absolue. Mention spéciale pour le parfum Mangue et de fruits tropicaux locaux, un véritable régal !', stars: 5, avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=200' },
   ];
@@ -133,7 +133,7 @@ export default function Home() {
               transition={{ delay: 0.1 }}
               className="text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.05]"
             >
-              Aliyota <span className="text-primary-dark block font-black">– Le yaourt qui te veut du bien</span>
+              Yolita <span className="text-primary-dark block font-black">– Le yaourt qui te veut du bien</span>
             </motion.h1>
             
             <motion.p
@@ -203,10 +203,10 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Aliyota Label Design */}
+              {/* Yolita Label Design */}
               <div className="my-auto space-y-2">
                 <h2 className="text-4xl font-extrabold text-primary-dark tracking-tighter uppercase">
-                  Aliyota
+                  Yolita
                 </h2>
                 <div className="h-0.5 w-12 bg-primary-dark mx-auto rounded-full"></div>
                 <p className="text-[10px] text-gray-400 font-extrabold tracking-widest uppercase">
@@ -277,7 +277,7 @@ export default function Home() {
               >
                 <img 
                   src="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=500" 
-                  alt="Yaourt Artisanal Fruitier Aliyota" 
+                  alt="Yaourt Artisanal Fruitier Yolita" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
@@ -289,7 +289,7 @@ export default function Home() {
                 >
                   <img 
                     src="/images/aliyota-pots-empiles.jpeg" 
-                    alt="Pots de yaourt Aliyota empilés" 
+                    alt="Pots de yaourt Yolita empilés" 
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
@@ -309,7 +309,7 @@ export default function Home() {
                 Une fraîcheur pétillante pour rayonner au naturel
               </h2>
               <p className="text-gray-600 text-lg font-medium leading-relaxed">
-                Aliyota est faite pour tous ceux et celles qui croquent la vie à pleines dents. Nous croyons que la joie de vivre passe par une alimentation sincère, colorée et naturelle. C'est pourquoi nous créons des recettes réconfortantes, douces comme des nuages, à consommer n'importe où, n'importe quand !
+                Yolita est faite pour tous ceux et celles qui croquent la vie à pleines dents. Nous croyons que la joie de vivre passe par une alimentation sincère, colorée et naturelle. C'est pourquoi nous créons des recettes réconfortantes, douces comme des nuages, à consommer n'importe où, n'importe quand !
               </p>
               
               <div className="grid grid-cols-2 gap-6 pt-4">
@@ -423,7 +423,7 @@ export default function Home() {
                 {/* Main Label */}
                 <div className="my-auto space-y-1.5 px-4 w-full">
                   <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">
-                    Aliyota
+                    Yolita
                   </h3>
                   <div className="h-0.5 w-12 bg-gray-900/20 mx-auto rounded-full"></div>
                   <p className="text-[10px] text-gray-700 font-extrabold uppercase tracking-tight leading-tight line-clamp-2 px-1">
@@ -667,22 +667,22 @@ export default function Home() {
             Notre Histoire
           </h2>
           <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
-            Aliyota est née d'une passion toute simple : mon amour pour le yaourt.
+            Yolita est née d'une passion toute simple : mon amour pour le yaourt.
           </p>
           <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
             Depuis toujours, j'ai aimé le yaourt, mais celui qui m'a vraiment marquée est celui que préparait ma mère. Contrairement à beaucoup de yaourts que l'on trouve dans le commerce, souvent très liquides et parfois trop sucrés, le sien était naturellement doux, onctueux et généreux. Chaque gorgée avait le goût du fait maison, de la qualité et du savoir-faire.
           </p>
           <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
-            En grandissant, j'ai réalisé que beaucoup de personnes recherchaient cette même authenticité : un yaourt plus épais, plus gourmand, préparé avec soin et sans excès de sucre. C'est cette envie qui a donné naissance à Aliyota.
+            En grandissant, j'ai réalisé que beaucoup de personnes recherchaient cette même authenticité : un yaourt plus épais, plus gourmand, préparé avec soin et sans excès de sucre. C'est cette envie qui a donné naissance à Yolita.
           </p>
           <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
             Mais je voulais aller encore plus loin. J'aime créer, expérimenter et découvrir de nouvelles saveurs. L'idée d'intégrer des fruits est venue naturellement. Les fruits apportent de la fraîcheur, de la couleur et permettent à chacun de vivre une expérience unique.
           </p>
           <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-6 leading-relaxed text-left">
-            Chez Aliyota, nous croyons que chaque personne a ses propres goûts. C'est pourquoi nous proposons la possibilité de composer son yaourt selon ses envies, en choisissant les saveurs et les fruits qui lui correspondent le mieux.
+            Chez Yolita, nous croyons que chaque personne a ses propres goûts. C'est pourquoi nous proposons la possibilité de composer son yaourt selon ses envies, en choisissant les saveurs et les fruits qui lui correspondent le mieux.
           </p>
           <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto mb-10 leading-relaxed text-left">
-            Aliyota, c'est donc bien plus qu'un simple yaourt : c'est le mélange d'un souvenir d'enfance, d'une passion pour les saveurs authentiques et d'une envie de laisser chaque client créer son propre moment de plaisir.
+            Yolita, c'est donc bien plus qu'un simple yaourt : c'est le mélange d'un souvenir d'enfance, d'une passion pour les saveurs authentiques et d'une envie de laisser chaque client créer son propre moment de plaisir.
           </p>
           <Link
             to="/produits"
@@ -700,7 +700,7 @@ export default function Home() {
             <span className="text-xs font-black text-primary-dark uppercase tracking-widest bg-primary/20 px-3 py-1 rounded-full mb-3 inline-block">
               LA COMMUNAUTÉ GOURMANDE
             </span>
-            <h2 className="text-4xl font-extrabold tracking-tight">Tout le monde adore Aliyota !</h2>
+            <h2 className="text-4xl font-extrabold tracking-tight">Tout le monde adore Yolita !</h2>
             <p className="text-gray-500 font-medium mt-1">Le coup de foudre velouté partagé par toute la maisonnée.</p>
           </div>
           
