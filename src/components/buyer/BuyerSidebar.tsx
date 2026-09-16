@@ -4,21 +4,10 @@
  */
 
 import React from 'react';
-import {
-  Home,
-  ShoppingBag,
-  Heart,
-  Package,
-  FileText,
-  ClipboardList,
-  Bell,
-  User,
-  Store,
-  ArrowRight,
-  ShieldCheck,
-} from 'lucide-react';
+import { Store, ArrowRight, ShieldCheck, User } from 'lucide-react';
 import { BuyerTab } from '../../pages/BuyerSpace';
 import { BuyerType } from '../../UserContext';
+import { getBuyerMenuItems } from './menuItems';
 
 interface Props {
   activeTab: BuyerTab;
@@ -38,20 +27,12 @@ export const BuyerSidebar: React.FC<Props> = ({
   unreadNotificationsCount,
 }) => {
   const isGros = buyerType === 'gros';
-
-  const menuItems: { id: BuyerTab; label: string; icon: any; badge: string | null; visible: boolean }[] = [
-    { id: 'dashboard', label: 'Tableau de bord', icon: Home, badge: null, visible: true },
-    { id: 'catalog', label: 'Catalogue', icon: ShoppingBag, badge: null, visible: true },
-    { id: 'favorites', label: 'Favoris', icon: Heart, badge: favoritesCount > 0 ? `${favoritesCount}` : null, visible: true },
-    { id: 'orders', label: 'Mes commandes', icon: Package, badge: null, visible: true },
-    { id: 'invoices', label: 'Mes factures', icon: FileText, badge: 'B2B', visible: isGros },
-    { id: 'quotes', label: 'Demandes de devis', icon: ClipboardList, badge: pendingQuotesCount > 0 ? `${pendingQuotesCount}` : 'B2B', visible: isGros },
-    { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadNotificationsCount > 0 ? `${unreadNotificationsCount}` : null, visible: true },
-    { id: 'profile', label: 'Mon profil', icon: User, badge: null, visible: true },
-  ];
+  const menuItems = getBuyerMenuItems({ buyerType, favoritesCount, pendingQuotesCount, unreadNotificationsCount });
 
   return (
-    <aside className="w-full lg:w-64 shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-100 rounded-3xl lg:rounded-[28px] p-4 flex flex-col justify-between shadow-sm">
+    // Visible uniquement à partir de lg: — sur mobile/tablette, ce menu passe
+    // par le bouton burger dans l'en-tête de l'espace acheteur (voir BuyerSpace.tsx).
+    <aside className="hidden lg:flex w-64 shrink-0 bg-white border-r border-gray-100 rounded-[28px] p-4 flex-col justify-between shadow-sm">
       <div>
         <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
           Menu Acheteur Yolita

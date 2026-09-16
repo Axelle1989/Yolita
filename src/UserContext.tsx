@@ -8,7 +8,7 @@ import { supabase } from './supabaseClient';
 
 // Cet email est réservé exclusivement à l'espace administrateur (/admin) et
 // ne peut jamais être utilisé pour créer un compte client.
-const RESERVED_ADMIN_EMAIL = 'axo.hossou@epitech.eu';
+const RESERVED_ADMIN_EMAIL = 'axellehossou690@gmail.com';
 
 export type BuyerType = 'gros' | 'detail';
 
