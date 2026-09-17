@@ -124,6 +124,43 @@ Deno.serve(async (req: Request) => {
       return json({ success: true });
     }
 
+    if (action === 'listReviews') {
+      const { data, error } = await supabaseAdmin
+        .from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) return json({ success: false, error: error.message }, 500);
+      return json({ success: true, reviews: data });
+    }
+
+    if (action === 'setReviewFeatured') {
+      const { reviewId, featured } = body;
+
+      if (featured) {
+        const { count, error: countError } = await supabaseAdmin
+          .from('reviews')
+          .select('id', { count: 'exact', head: true })
+          .eq('featured', true);
+
+        if (countError) return json({ success: false, error: countError.message }, 500);
+        if ((count || 0) >= 3) {
+          return json(
+            { success: false, error: "Maximum 3 avis affichés sur le site. Désactivez-en un d'abord." },
+            400
+          );
+        }
+      }
+
+      const { error } = await supabaseAdmin
+        .from('reviews')
+        .update({ featured })
+        .eq('id', reviewId);
+
+      if (error) return json({ success: false, error: error.message }, 500);
+      return json({ success: true });
+    }
+
     if (action === 'updateStatus') {
       const { orderId, status, statusHistory, adminMessage } = body;
       const { error } = await supabaseAdmin

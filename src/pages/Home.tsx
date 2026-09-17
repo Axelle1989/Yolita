@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, Star, Heart, Sparkles, Sprout, ShieldCheck, Smile, Check, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { ArrowRight, Heart, Sparkles, Sprout, ShieldCheck, Smile, Check, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSiteConfig } from '../SiteConfigContext';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../CartContext';
+import { supabase } from '../supabaseClient';
 
 const aromaVisuals: Record<string, { emoji: string, bg: string, accent: string }> = {
   'Fraise sauvage': { emoji: '🍓', bg: '#FDF0F2', accent: '#E58C65' },
@@ -28,6 +29,20 @@ export default function Home() {
   const CAPACITIES = config.capacities;
   const DIY_BASES = config.diyBases;
   const DIY_AROMAS = config.diyAromas;
+
+  const [reviews, setReviews] = useState<{ id: string; name: string; city: string | null; message: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('id, name, city, message')
+        .eq('featured', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      if (!error && data) setReviews(data);
+    })();
+  }, []);
   
   // Custom Yogurt Builder state (Option B - Multiple Fruits support)
   const [diyBase, setDiyBase] = useState(DIY_BASES[0]);
@@ -86,12 +101,6 @@ export default function Home() {
     setDiyAdded(true);
     setTimeout(() => setDiyAdded(false), 2000);
   };
-
-  const testimonials = [
-    { name: 'Koffi', location: 'Cotonou', text: 'Une texture onctueuse divine et un vrai goût de fruit frais. Yolita, c\'est mon plaisir sain après le travail ou le sport !', stars: 5, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Sena', location: 'Calavi', text: 'J\'adore le fait qu\'il n\'y ait aucun sucre ajouté. Mes enfants l\'adorent pour le goûter, c\'est ultra frais, léger et très sain.', stars: 5, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Farida', location: 'Parakou', text: 'Une douceur absolue. Mention spéciale pour le parfum Mangue et de fruits tropicaux locaux, un véritable régal !', stars: 5, avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=200' },
-  ];
 
   const valueProps = [
     { 
@@ -703,37 +712,33 @@ export default function Home() {
             <h2 className="text-4xl font-extrabold tracking-tight">Tout le monde adore Yolita !</h2>
             <p className="text-gray-500 font-medium mt-1">Le coup de foudre velouté partagé par toute la maisonnée.</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4 }}
-                className="bg-secondary p-8 rounded-[36px] border border-border-subtle flex flex-col justify-between text-left shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div>
-                  <div className="flex text-primary-dark mb-4">
-                    {[...Array(t.stars)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 font-medium mb-6 italic leading-relaxed">"{t.text}"</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-primary">
-                    <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  </div>
+
+          {reviews.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 font-semibold">
+              Les premiers avis de nos client(e)s arrivent bientôt ici.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {reviews.map((r) => (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
+                  className="bg-secondary p-8 rounded-[36px] border border-border-subtle flex flex-col justify-between text-left shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <p className="text-gray-700 font-medium mb-6 italic leading-relaxed">"{r.message}"</p>
                   <div>
-                    <h4 className="font-bold text-gray-900 text-sm">{t.name}</h4>
-                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">{t.location}</p>
+                    <h4 className="font-bold text-gray-900 text-sm">{r.name}</h4>
+                    {r.city && (
+                      <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">{r.city}</p>
+                    )}
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>

@@ -99,7 +99,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs uppercase tracking-widest text-primary-dark mb-1">Nos Adresses</h4>
-                  <p className="text-gray-900 font-bold text-sm">Boutique : Haie Vive, Cotonou, Bénin</p>
+                  <p className="text-gray-900 font-bold text-sm">Boutique : Sedegbe Godomey, Bénin</p>
                   <p className="text-gray-500 font-medium text-xs mt-1">Atelier : Zone Industrielle, Calavi, Bénin</p>
                 </div>
               </div>
@@ -121,7 +121,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs uppercase tracking-widest text-primary-dark mb-1">Téléphone</h4>
-                  <p className="text-gray-900 font-bold text-sm">+229 97 00 11 22</p>
+                  <p className="text-gray-900 font-bold text-sm">+229 01 47 81 67 78</p>
                   <p className="text-gray-500 font-medium text-xs mt-1">Du lundi au samedi de 8h à 19h.</p>
                 </div>
               </div>

@@ -62,7 +62,7 @@ export default function AdminDashboard() {
   // Une reconnexion à chaque ouverture de /admin est le compromis le plus sûr.
 
   // Active view: 'orders' or 'products'
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition' | 'customers' | 'quotes'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition' | 'customers' | 'quotes' | 'reviews'>('orders');
 
   // Comptes clients (gros / détail)
   const [customers, setCustomers] = useState<any[]>([]);
@@ -76,6 +76,12 @@ export default function AdminDashboard() {
   const [quotesError, setQuotesError] = useState('');
   const [respondingQuoteId, setRespondingQuoteId] = useState<string | null>(null);
   const [quoteResponseDrafts, setQuoteResponseDrafts] = useState<Record<string, { price: string; message: string }>>({});
+
+  // Avis clients (mis en avant sur la page d'accueil)
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
+  const [togglingReviewId, setTogglingReviewId] = useState<string | null>(null);
 
   // Orders list and filtering
   const [orders, setOrders] = useState<Order[]>([]);
@@ -200,6 +206,7 @@ export default function AdminDashboard() {
       loadOrders();
       loadCustomers();
       loadQuotes();
+      loadReviews();
       (async () => {
         try {
           const data = await callAdminOrders({ action: 'countUsers' });
@@ -210,6 +217,32 @@ export default function AdminDashboard() {
       })();
     }
   }, [isLoggedIn]);
+
+  const loadReviews = async () => {
+    setReviewsLoading(true);
+    setReviewsError('');
+    try {
+      const data = await callAdminOrders({ action: 'listReviews' });
+      setReviews(data.reviews || []);
+    } catch (err: any) {
+      setReviewsError(err.message || 'Impossible de charger les avis.');
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const toggleReviewFeatured = async (reviewId: string, featured: boolean) => {
+    setTogglingReviewId(reviewId);
+    setReviewsError('');
+    try {
+      await callAdminOrders({ action: 'setReviewFeatured', reviewId, featured });
+      await loadReviews();
+    } catch (err: any) {
+      setReviewsError(err.message || "Impossible de mettre à jour cet avis.");
+    } finally {
+      setTogglingReviewId(null);
+    }
+  };
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -619,6 +652,21 @@ export default function AdminDashboard() {
             {quotes.filter((q) => q.status === 'pending').length > 0 && (
               <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 {quotes.filter((q) => q.status === 'pending').length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`px-6 py-4 font-black uppercase text-xs tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'reviews' 
+                ? 'border-[#1E3F37] text-[#1E3F37]' 
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <ThumbsUp className="w-4 h-4" /> Avis
+            {reviews.length > 0 && (
+              <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {reviews.length}
               </span>
             )}
           </button>
@@ -1472,6 +1520,79 @@ export default function AdminDashboard() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'reviews' && (
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">
+                  Avis Clients ({reviews.length})
+                </h3>
+                <p className="text-[11px] text-gray-400 font-semibold mt-1">
+                  {reviews.filter((r) => r.featured).length}/3 avis actuellement affichés sur la page d'accueil
+                </p>
+              </div>
+              <button
+                onClick={loadReviews}
+                disabled={reviewsLoading}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-200 text-gray-500 flex items-center gap-1 disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3 h-3 ${reviewsLoading ? 'animate-spin' : ''}`} /> Actualiser
+              </button>
+            </div>
+
+            {reviewsError && (
+              <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl p-4">
+                ⚠️ {reviewsError}
+              </div>
+            )}
+
+            {reviewsLoading && reviews.length === 0 ? (
+              <p className="text-xs text-gray-400 font-semibold">Chargement des avis…</p>
+            ) : reviews.length === 0 ? (
+              <p className="text-xs text-gray-400 font-semibold py-4">
+                Aucun avis pour le moment. Les avis envoyés par les acheteurs depuis leur tableau de bord
+                apparaîtront ici.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {reviews.map((r) => (
+                  <div
+                    key={r.id}
+                    className={`border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      r.featured ? 'border-emerald-200 bg-emerald-50/50' : 'border-gray-100'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-gray-800">
+                        {r.name} {r.city && <span className="text-gray-400 font-semibold">· {r.city}</span>}
+                      </p>
+                      <p className="text-xs text-gray-600 font-semibold mt-1">{r.message}</p>
+                      <p className="text-[10px] text-gray-400 font-semibold mt-1">
+                        {new Date(r.created_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => toggleReviewFeatured(r.id, !r.featured)}
+                      disabled={togglingReviewId === r.id}
+                      className={`shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap disabled:opacity-60 ${
+                        r.featured
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {togglingReviewId === r.id
+                        ? '...'
+                        : r.featured
+                        ? '✓ Affiché sur le site'
+                        : 'Afficher sur le site'}
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

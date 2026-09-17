@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Package,
@@ -14,9 +14,12 @@ import {
   ShoppingCart,
   Sparkles,
   FileText,
+  MessageCircle,
+  Send,
 } from 'lucide-react';
 import { Customer } from '../../../UserContext';
 import { BuyerTab } from '../../../pages/BuyerSpace';
+import { supabase } from '../../../supabaseClient';
 
 interface OrderRow {
   id: string;
@@ -45,6 +48,49 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
   const isGros = customer.buyerType === 'gros';
   const ongoingOrders = orders.filter((o) => o.status !== 'completed');
   const latestOrder = orders[0] || null;
+
+  const [myReviews, setMyReviews] = useState<{ id: string; message: string; featured: boolean }[]>([]);
+  const [reviewCity, setReviewCity] = useState('');
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [reviewSuccess, setReviewSuccess] = useState('');
+
+  const loadMyReviews = async () => {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('id, message, featured')
+      .eq('user_id', customer.id)
+      .order('created_at', { ascending: false });
+    if (!error) setMyReviews(data || []);
+  };
+
+  useEffect(() => {
+    loadMyReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer.id]);
+
+  const submitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewMessage.trim()) return;
+    setReviewSubmitting(true);
+    setReviewError('');
+    setReviewSuccess('');
+    const { error } = await supabase.from('reviews').insert({
+      user_id: customer.id,
+      name: customer.name,
+      city: reviewCity.trim() || null,
+      message: reviewMessage.trim(),
+    });
+    setReviewSubmitting(false);
+    if (error) {
+      setReviewError("Impossible d'envoyer votre avis pour le moment.");
+    } else {
+      setReviewMessage('');
+      setReviewSuccess("Merci ! Votre avis a été envoyé et sera examiné par l'équipe Yolita.");
+      loadMyReviews();
+    }
+  };
 
   const now = new Date();
   const monthlyTotal = orders
@@ -212,6 +258,59 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
           </Link>
         </div>
       )}
+
+      {/* Laisser un avis */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8">
+        <h3 className="text-sm font-black uppercase tracking-widest text-gray-700 mb-1 flex items-center gap-2">
+          <MessageCircle className="w-4 h-4 text-[#1E3F37]" /> Laisser un avis sur Yolita
+        </h3>
+        <p className="text-[11px] text-gray-400 font-semibold mb-4">
+          Votre avis peut être mis en avant sur la page d'accueil du site par notre équipe.
+        </p>
+        <form onSubmit={submitReview} className="space-y-3 mb-6">
+          <input
+            type="text"
+            value={reviewCity}
+            onChange={(e) => setReviewCity(e.target.value)}
+            placeholder="Votre ville (optionnel)"
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
+          />
+          <textarea
+            value={reviewMessage}
+            onChange={(e) => setReviewMessage(e.target.value)}
+            placeholder="Qu'avez-vous pensé de vos yaourts Yolita ?"
+            rows={3}
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
+          />
+          {reviewError && <p className="text-rose-600 text-xs font-bold">⚠️ {reviewError}</p>}
+          {reviewSuccess && <p className="text-emerald-700 text-xs font-bold">✓ {reviewSuccess}</p>}
+          <button
+            type="submit"
+            disabled={reviewSubmitting || !reviewMessage.trim()}
+            className="inline-flex items-center gap-2 bg-[#1E3F37] text-white text-xs font-black uppercase tracking-widest px-5 py-2.5 rounded-xl disabled:opacity-60"
+          >
+            <Send className="w-3.5 h-3.5" /> {reviewSubmitting ? 'Envoi...' : 'Envoyer mon avis'}
+          </button>
+        </form>
+
+        {myReviews.length > 0 && (
+          <div className="border-t border-gray-100 pt-4 space-y-2">
+            <p className="text-[10px] uppercase font-black tracking-widest text-gray-400 mb-2">Mes avis envoyés</p>
+            {myReviews.map((r) => (
+              <div key={r.id} className="flex items-center justify-between gap-3 bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-600 font-semibold truncate">{r.message}</p>
+                <span
+                  className={`shrink-0 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                    r.featured ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  {r.featured ? 'Affiché sur le site' : 'En attente'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

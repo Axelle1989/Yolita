@@ -47,11 +47,11 @@ export default function Footer() {
             <ul className="space-y-4 text-sm font-bold text-primary-light/90">
               <li className="flex items-start">
                 <MapPin className="w-5 h-5 mr-3 text-accent shrink-0" />
-                <span>Haie Vive, Cotonou, Bénin</span>
+                <span>Sedegbe Godomey, Bénin</span>
               </li>
               <li className="flex items-center">
                 <Phone className="w-5 h-5 mr-3 text-accent shrink-0" />
-                <span>+229 97 00 11 22</span>
+                <span>+229 01 47 81 67 78</span>
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 mr-3 text-accent shrink-0" />

@@ -85,8 +85,8 @@ export default function Facture() {
             <div className="flex items-start justify-between mb-10">
               <div>
                 <p className="text-2xl font-black text-[#1E3F37]">🌸 Yolita</p>
-                <p className="text-xs text-gray-400 font-semibold mt-1">Haie Vive, Cotonou, Bénin</p>
-                <p className="text-xs text-gray-400 font-semibold">+229 97 00 11 22</p>
+                <p className="text-xs text-gray-400 font-semibold mt-1">Sedegbe Godomey, Bénin</p>
+                <p className="text-xs text-gray-400 font-semibold">+229 01 47 81 67 78</p>
               </div>
               <div className="text-right">
                 <p className="text-lg font-black text-gray-900">FACTURE</p>
