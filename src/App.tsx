@@ -12,6 +12,7 @@ import { FavoritesProvider } from './FavoritesContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SidebarCart from './components/SidebarCart';
+import WhatsAppButton from './components/WhatsAppButton';
 import Home from './pages/Home';
 import Store from './pages/Store';
 import Contact from './pages/Contact';
@@ -31,6 +32,7 @@ function CustomerLayout({ children }: { children: React.ReactNode }) {
       <SidebarCart />
       <main className="flex-grow">{children}</main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { useSiteConfig } from '../SiteConfigContext';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../CartContext';
+import { useUser } from '../UserContext';
 import { supabase } from '../supabaseClient';
 
 const aromaVisuals: Record<string, { emoji: string, bg: string, accent: string }> = {
@@ -25,6 +26,7 @@ const aromaVisuals: Record<string, { emoji: string, bg: string, accent: string }
 export default function Home() {
   const { addToCart } = useCart();
   const { config } = useSiteConfig();
+  const { customer } = useUser();
   const products = config.products;
   const CAPACITIES = config.capacities;
   const DIY_BASES = config.diyBases;
@@ -312,7 +314,7 @@ export default function Home() {
 
             <div className="lg:col-span-6 space-y-8 text-left">
               <span className="bg-primary text-primary-dark px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
-                LA ALIYOTA ATTITUDE
+                LA YOLITA ATTITUDE
               </span>
               <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight tracking-tight">
                 Une fraîcheur pétillante pour rayonner au naturel
@@ -739,6 +741,19 @@ export default function Home() {
               ))}
             </div>
           )}
+
+          {/* Appel à laisser un avis — visible pour tout le monde */}
+          <div className="mt-14 text-center bg-secondary/60 border border-border-subtle rounded-[28px] py-8 px-6 max-w-xl mx-auto">
+            <p className="text-sm font-bold text-gray-700 mb-4">
+              Vous êtes client Yolita ? Partagez votre avis, il pourra être mis en avant ici même.
+            </p>
+            <Link
+              to={customer ? '/tableau-de-bord' : '/connexion'}
+              className="inline-block bg-primary-dark text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
+            >
+              {customer ? 'Laisser mon avis' : 'Se connecter pour laisser un avis'}
+            </Link>
+          </div>
         </div>
       </section>
     </div>

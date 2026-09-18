@@ -5,22 +5,17 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL');
-const ADMIN_PASSWORD = Deno.env.get('ADMIN_PASSWORD');
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-function isAdmin(email: string, password: string) {
+function isAdmin(email: string, password: string, adminEmailEnv: string | undefined, adminPasswordEnv: string | undefined) {
   return (
     typeof email === 'string' &&
     typeof password === 'string' &&
-    email.trim().toLowerCase() === (ADMIN_EMAIL || '').toLowerCase() &&
-    password === ADMIN_PASSWORD
+    email.trim().toLowerCase() === (adminEmailEnv || '').toLowerCase() &&
+    password === adminPasswordEnv
   );
 }
 
@@ -28,6 +23,12 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+
+  // Lus à CHAQUE requête (jamais mis en cache par l'instance de la fonction).
+  const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL');
+  const ADMIN_PASSWORD = Deno.env.get('ADMIN_PASSWORD');
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
@@ -39,7 +40,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const { adminEmail, adminPassword, action } = body;
 
-    if (!isAdmin(adminEmail, adminPassword)) {
+    if (!isAdmin(adminEmail, adminPassword, ADMIN_EMAIL, ADMIN_PASSWORD)) {
       return json({ success: false, error: 'Accès admin refusé.' }, 401);
     }
 
@@ -175,6 +176,27 @@ Deno.serve(async (req: Request) => {
     if (action === 'delete') {
       const { orderId } = body;
       const { error } = await supabaseAdmin.from('orders').delete().eq('id', orderId);
+      if (error) return json({ success: false, error: error.message }, 500);
+      return json({ success: true });
+    }
+
+    if (action === 'listMessages') {
+      const { data, error } = await supabaseAdmin
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) return json({ success: false, error: error.message }, 500);
+      return json({ success: true, messages: data });
+    }
+
+    if (action === 'markMessageRead') {
+      const { messageId } = body;
+      const { error } = await supabaseAdmin
+        .from('contact_messages')
+        .update({ status: 'read' })
+        .eq('id', messageId);
+
       if (error) return json({ success: false, error: error.message }, 500);
       return json({ success: true });
     }

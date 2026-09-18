@@ -62,7 +62,7 @@ export default function AdminDashboard() {
   // Une reconnexion à chaque ouverture de /admin est le compromis le plus sûr.
 
   // Active view: 'orders' or 'products'
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition' | 'customers' | 'quotes' | 'reviews'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'composition' | 'customers' | 'quotes' | 'reviews' | 'messages'>('orders');
 
   // Comptes clients (gros / détail)
   const [customers, setCustomers] = useState<any[]>([]);
@@ -82,6 +82,11 @@ export default function AdminDashboard() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsError, setReviewsError] = useState('');
   const [togglingReviewId, setTogglingReviewId] = useState<string | null>(null);
+
+  // Messages du formulaire de contact
+  const [messages, setMessages] = useState<any[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState('');
 
   // Orders list and filtering
   const [orders, setOrders] = useState<Order[]>([]);
@@ -200,6 +205,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadMessages = async () => {
+    setMessagesLoading(true);
+    setMessagesError('');
+    try {
+      const data = await callAdminOrders({ action: 'listMessages' });
+      setMessages(data.messages || []);
+    } catch (err: any) {
+      setMessagesError(err.message || 'Impossible de charger les messages.');
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  const markMessageRead = async (messageId: string) => {
+    try {
+      await callAdminOrders({ action: 'markMessageRead', messageId });
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, status: 'read' } : m)));
+    } catch (err: any) {
+      setMessagesError(err.message || "Impossible de marquer ce message comme lu.");
+    }
+  };
+
   // Load orders once logged in
   useEffect(() => {
     if (isLoggedIn) {
@@ -207,6 +234,7 @@ export default function AdminDashboard() {
       loadCustomers();
       loadQuotes();
       loadReviews();
+      loadMessages();
       (async () => {
         try {
           const data = await callAdminOrders({ action: 'countUsers' });
@@ -667,6 +695,21 @@ export default function AdminDashboard() {
             {reviews.length > 0 && (
               <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 {reviews.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('messages')}
+            className={`px-6 py-4 font-black uppercase text-xs tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'messages' 
+                ? 'border-[#1E3F37] text-[#1E3F37]' 
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <Mail className="w-4 h-4" /> Messages
+            {messages.filter((m) => m.status !== 'read').length > 0 && (
+              <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {messages.filter((m) => m.status !== 'read').length}
               </span>
             )}
           </button>
@@ -1591,6 +1634,71 @@ export default function AdminDashboard() {
                         ? '✓ Affiché sur le site'
                         : 'Afficher sur le site'}
                     </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-700">
+                Messages du formulaire de contact ({messages.length})
+              </h3>
+              <button
+                onClick={loadMessages}
+                disabled={messagesLoading}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-200 text-gray-500 flex items-center gap-1 disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3 h-3 ${messagesLoading ? 'animate-spin' : ''}`} /> Actualiser
+              </button>
+            </div>
+
+            {messagesError && (
+              <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl p-4">
+                ⚠️ {messagesError}
+              </div>
+            )}
+
+            {messagesLoading && messages.length === 0 ? (
+              <p className="text-xs text-gray-400 font-semibold">Chargement des messages…</p>
+            ) : messages.length === 0 ? (
+              <p className="text-xs text-gray-400 font-semibold py-4">
+                Aucun message pour le moment. Les messages envoyés depuis la page "Nous contacter" du site
+                apparaîtront ici.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`border rounded-2xl p-4 ${
+                      m.status === 'read' ? 'border-gray-100' : 'border-amber-200 bg-amber-50/40'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <div>
+                        <p className="text-xs font-black text-gray-800">{m.name}</p>
+                        <p className="text-[11px] text-gray-400 font-semibold">
+                          {m.email} {m.phone && `· ${m.phone}`} · {new Date(m.created_at).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                      {m.status !== 'read' ? (
+                        <button
+                          onClick={() => markMessageRead(m.id)}
+                          className="text-[10px] font-black uppercase tracking-widest bg-amber-600 text-white px-3 py-1.5 rounded-lg whitespace-nowrap"
+                        >
+                          Marquer comme lu
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg whitespace-nowrap">
+                          ✓ Lu
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-700 font-semibold bg-gray-50 rounded-xl p-3">{m.message}</p>
                   </div>
                 ))}
               </div>
