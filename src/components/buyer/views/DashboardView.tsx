@@ -16,10 +16,16 @@ import {
   FileText,
   MessageCircle,
   Send,
+  Bike,
+  Wallet,
+  Gift,
+  Plus,
 } from 'lucide-react';
 import { Customer } from '../../../UserContext';
 import { BuyerTab } from '../../../pages/BuyerSpace';
 import { supabase } from '../../../supabaseClient';
+import { useSiteConfig } from '../../../SiteConfigContext';
+import { useCart } from '../../../CartContext';
 
 interface OrderRow {
   id: string;
@@ -48,9 +54,18 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
   const isGros = customer.buyerType === 'gros';
   const ongoingOrders = orders.filter((o) => o.status !== 'completed');
   const latestOrder = orders[0] || null;
+  const hasHistory = orders.length > 0;
+
+  const { config } = useSiteConfig();
+  const { addToCart } = useCart();
+
+  const bestSellers = config.products
+    .filter((p) => p.category !== 'pack')
+    .filter((p) => p.badge === 'Populaire' || p.badge === 'Best-Seller' || p.badge)
+    .slice(0, 4);
+  const fallbackPicks = bestSellers.length > 0 ? bestSellers : config.products.slice(0, 4);
 
   const [myReviews, setMyReviews] = useState<{ id: string; message: string; featured: boolean }[]>([]);
-  const [reviewCity, setReviewCity] = useState('');
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState('');
@@ -79,7 +94,6 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
     const { error } = await supabase.from('reviews').insert({
       user_id: customer.id,
       name: customer.name,
-      city: reviewCity.trim() || null,
       message: reviewMessage.trim(),
     });
     setReviewSubmitting(false);
@@ -107,7 +121,7 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-black mb-3 border border-amber-400/30">
             <Sparkles className="w-3.5 h-3.5" />
-            {isGros ? 'Espace B2B • Compte Grossiste' : 'Espace Particulier • Yaourts Artisanaux'}
+            {isGros ? 'Espace B2B • Compte Grossiste' : 'Espace Particulier'}
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mb-2">
@@ -147,77 +161,137 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
               </button>
             )}
           </div>
+
+          <p className="text-white/50 text-[11px] font-bold mt-4 flex items-center gap-1.5 flex-wrap">
+            🚚 Livraison Abomey-Calavi, Cotonou, Godomey &nbsp;|&nbsp; 💳 Paiement Mobile Money ou à la livraison
+          </p>
         </div>
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* KPI */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#1E3F37]/10 text-[#1E3F37] flex items-center justify-center shrink-0">
-            <Package className="w-6 h-6" />
+      {/* KPI, ou cartes utiles si le compte est tout neuf */}
+      {hasHistory ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#1E3F37]/10 text-[#1E3F37] flex items-center justify-center shrink-0">
+              <Package className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-gray-900">{orders.length}</div>
+              <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Commandes passées</div>
+            </div>
           </div>
-          <div>
-            <div className="text-2xl font-black text-gray-900">{orders.length}</div>
-            <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Commandes passées</div>
-          </div>
-        </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6" />
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-gray-900">{ongoingOrders.length}</div>
+              <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Commandes en cours</div>
+            </div>
           </div>
-          <div>
-            <div className="text-2xl font-black text-gray-900">{ongoingOrders.length}</div>
-            <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Commandes en cours</div>
-          </div>
-        </div>
 
-        {isGros ? (
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="text-lg font-black text-gray-900">{monthlyTotal.toLocaleString('fr-FR')} FCFA</div>
-              <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Achats ce mois-ci</div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <Heart className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="text-2xl font-black text-gray-900">{favoritesCount}</div>
-              <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Produits favoris</div>
-            </div>
-          </div>
-        )}
-
-        {isGros ? (
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center shrink-0">
-              <ClipboardList className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="text-2xl font-black text-gray-900">{pendingQuotesCount}</div>
-              <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Devis en attente</div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="text-sm font-black text-gray-900">
-                {latestOrder ? new Date(latestOrder.created_at).toLocaleDateString('fr-FR') : '—'}
+          {isGros ? (
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-6 h-6" />
               </div>
-              <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Dernière commande</div>
+              <div>
+                <div className="text-lg font-black text-gray-900">{monthlyTotal.toLocaleString('fr-FR')} FCFA</div>
+                <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Achats ce mois-ci</div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Heart className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-black text-gray-900">{favoritesCount}</div>
+                <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Produits favoris</div>
+              </div>
+            </div>
+          )}
+
+          {isGros ? (
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center shrink-0">
+                <ClipboardList className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-black text-gray-900">{pendingQuotesCount}</div>
+                <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Devis en attente</div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-gray-900">
+                  {latestOrder ? new Date(latestOrder.created_at).toLocaleDateString('fr-FR') : '—'}
+                </div>
+                <div className="text-[10px] text-gray-400 font-black uppercase tracking-wide">Dernière commande</div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#1E3F37]/10 text-[#1E3F37] flex items-center justify-center shrink-0">
+              <Bike className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-gray-800">Livraison rapide</p>
+              <p className="text-[11px] text-gray-500 font-semibold mt-0.5">
+                24h à Abomey-Calavi, Cotonou et Godomey
+              </p>
             </div>
           </div>
-        )}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-gray-800">Paiement facile</p>
+              <p className="text-[11px] text-gray-500 font-semibold mt-0.5">
+                Mobile Money ou paiement à la livraison
+              </p>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <Gift className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-gray-800">Pack Duo Fruité</p>
+              <p className="text-[11px] text-gray-500 font-semibold mt-0.5">2 pots à partager — 3 000 FCFA</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* On a pensé à vous */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+        <h3 className="text-sm font-black uppercase tracking-widest text-gray-700 mb-4">On a pensé à vous</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {fallbackPicks.map((p) => (
+            <div key={p.id} className="border border-gray-100 rounded-2xl p-3 flex flex-col">
+              <img src={p.image} alt={p.name} className="w-full aspect-square rounded-xl object-cover mb-2" referrerPolicy="no-referrer" />
+              <p className="text-[11px] font-black text-gray-800 leading-tight line-clamp-2">{p.name}</p>
+              <p className="text-[10px] text-gray-400 font-semibold mb-2">{p.price.toLocaleString('fr-FR')} FCFA</p>
+              <button
+                onClick={() => addToCart(p, p.aromas?.[0] || 'Nature', 1, 'Petit (125 ml)', false, undefined, config.capacities)}
+                className="mt-auto inline-flex items-center justify-center gap-1 text-[10px] font-black uppercase tracking-widest bg-[#1E3F37] text-white py-2 rounded-lg"
+              >
+                <Plus className="w-3 h-3" /> Ajouter
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Dernière commande */}
@@ -247,18 +321,6 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
         </div>
       )}
 
-      {!latestOrder && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 text-center">
-          <p className="text-sm font-bold text-gray-500 mb-4">Vous n'avez pas encore passé de commande.</p>
-          <Link
-            to="/produits"
-            className="inline-block bg-[#1E3F37] text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
-          >
-            Découvrir le catalogue
-          </Link>
-        </div>
-      )}
-
       {/* Laisser un avis */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8">
         <h3 className="text-sm font-black uppercase tracking-widest text-gray-700 mb-1 flex items-center gap-2">
@@ -268,13 +330,6 @@ export const DashboardView: React.FC<Props> = ({ customer, orders, favoritesCoun
           Votre avis peut être mis en avant sur la page d'accueil du site par notre équipe.
         </p>
         <form onSubmit={submitReview} className="space-y-3 mb-6">
-          <input
-            type="text"
-            value={reviewCity}
-            onChange={(e) => setReviewCity(e.target.value)}
-            placeholder="Votre ville (optionnel)"
-            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1E3F37]/30"
-          />
           <textarea
             value={reviewMessage}
             onChange={(e) => setReviewMessage(e.target.value)}

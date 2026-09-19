@@ -300,6 +300,25 @@ export default function BuyerSpace() {
                     );
                   })}
               </nav>
+
+              {/* Type de compte + CTA revendeur — même contenu que le menu latéral desktop */}
+              <div className="px-4 pb-4">
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-400/20">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-black text-amber-200 flex items-center gap-1.5">
+                      {customer.buyerType === 'gros' ? '📦 Compte Grossiste' : '🏪 Compte Particulier'}
+                    </span>
+                  </div>
+                  {customer.buyerType !== 'gros' && (
+                    <a
+                      href="/contact"
+                      className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-black"
+                    >
+                      Devenir revendeur →
+                    </a>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
