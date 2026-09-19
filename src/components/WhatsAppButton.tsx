@@ -5,8 +5,8 @@
 
 import React from 'react';
 
-// Numéro WhatsApp de Yolita (+229 01 47 81 67 78, format international sans le "+").
-const WHATSAPP_NUMBER = '22901478167678';
+// Numéro WhatsApp de Yolita (229 + 47 81 67 78 — différent du numéro d'appel).
+const WHATSAPP_NUMBER = '22947816778';
 const DEFAULT_MESSAGE = "Bonjour Yolita ! Je souhaite passer une commande.";
 
 export default function WhatsAppButton() {
