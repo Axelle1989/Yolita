@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Trash2, Plus, Minus, Check, Sparkles, CreditCard, ShoppingBag } from 'lucide-react';
 import { useCart } from '../CartContext';
 import { useNavigate } from 'react-router-dom';
+import { getWhatsAppOrderLink } from '../utils/whatsapp';
 
 export default function SidebarCart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, isCartOpen, setCartOpen, clearCart } = useCart();
@@ -361,19 +362,29 @@ export default function SidebarCart() {
                 </div>
 
                 {isSimulatingOrder ? null : (
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <button
-                      onClick={() => navigate('/commander') || closeSidebar()}
-                      className="w-full py-4 border-2 border-primary-dark text-primary-dark font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary-light/50 transition-all flex items-center justify-center cursor-pointer shadow-sm"
+                  <div className="space-y-3 pt-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => navigate('/commander') || closeSidebar()}
+                        className="w-full py-4 border-2 border-primary-dark text-primary-dark font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary-light/50 transition-all flex items-center justify-center cursor-pointer shadow-sm"
+                      >
+                        En route (Livraison)
+                      </button>
+                      <button
+                        onClick={() => setIsSimulatingOrder(true)}
+                        className="w-full bg-primary-dark text-white py-4 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary-dark/85 transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Simuler achat
+                      </button>
+                    </div>
+                    <a
+                      href={getWhatsAppOrderLink(cart, cartTotal)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-4 font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      En route (Livraison)
-                    </button>
-                    <button
-                      onClick={() => setIsSimulatingOrder(true)}
-                      className="w-full bg-primary-dark text-white py-4 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary-dark/85 transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" /> Simuler achat
-                    </button>
+                      💬 Commander directement sur WhatsApp
+                    </a>
                   </div>
                 )}
               </div>

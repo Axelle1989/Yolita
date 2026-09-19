@@ -9,6 +9,7 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../CartContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { DELIVERY_FEES } from '../constants';
+import { getWhatsAppOrderLink } from '../utils/whatsapp';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -150,6 +151,15 @@ export default function CartPage() {
               >
                 Valider la commande <ArrowRight className="ml-2 w-5 h-5" />
               </button>
+
+              <a
+                href={getWhatsAppOrderLink(cart, cartTotal)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-4 mt-3 rounded-[24px] font-black uppercase tracking-widest text-xs transition-all shadow-md flex items-center justify-center gap-2 relative z-10"
+              >
+                💬 Ou commander sur WhatsApp
+              </a>
               
               <Link
                 to="/produits"

@@ -27,6 +27,37 @@ export default function Home() {
   const { addToCart } = useCart();
   const { config } = useSiteConfig();
   const { customer } = useUser();
+
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewName, setReviewName] = useState('');
+  const [reviewCity, setReviewCity] = useState('');
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [reviewSent, setReviewSent] = useState(false);
+
+  const submitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewName.trim() || !reviewMessage.trim()) return;
+    setReviewSubmitting(true);
+    setReviewError('');
+    const { error } = await supabase.from('reviews').insert({
+      user_id: customer ? customer.id : null,
+      name: reviewName.trim(),
+      city: reviewCity.trim() || null,
+      message: reviewMessage.trim(),
+    });
+    setReviewSubmitting(false);
+    if (error) {
+      setReviewError("Impossible d'envoyer votre avis pour le moment. Réessayez.");
+    } else {
+      setReviewSent(true);
+      setShowReviewForm(false);
+      setReviewName('');
+      setReviewCity('');
+      setReviewMessage('');
+    }
+  };
   const products = config.products;
   const CAPACITIES = config.capacities;
   const DIY_BASES = config.diyBases;
@@ -742,17 +773,79 @@ export default function Home() {
             </div>
           )}
 
-          {/* Appel à laisser un avis — visible pour tout le monde */}
-          <div className="mt-14 text-center bg-secondary/60 border border-border-subtle rounded-[28px] py-8 px-6 max-w-xl mx-auto">
-            <p className="text-sm font-bold text-gray-700 mb-4">
-              Vous êtes client Yolita ? Partagez votre avis, il pourra être mis en avant ici même.
-            </p>
-            <Link
-              to={customer ? '/tableau-de-bord' : '/connexion'}
-              className="inline-block bg-primary-dark text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
-            >
-              {customer ? 'Laisser mon avis' : 'Se connecter pour laisser un avis'}
-            </Link>
+          {/* Espace public pour laisser un avis — aucun compte requis */}
+          <div className="mt-14 bg-secondary/60 border border-border-subtle rounded-[28px] py-8 px-6 sm:px-10 max-w-xl mx-auto">
+            {reviewSent ? (
+              <div className="text-center py-4">
+                <p className="text-sm font-bold text-emerald-700">
+                  ✓ Merci ! Votre avis a été envoyé, il sera examiné avant publication.
+                </p>
+              </div>
+            ) : showReviewForm ? (
+              <form onSubmit={submitReview} className="space-y-4">
+                <h3 className="text-sm font-black uppercase tracking-widest text-primary-dark text-center mb-2">
+                  Laisser un avis sur Yolita
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    required
+                    value={reviewName}
+                    onChange={(e) => setReviewName(e.target.value)}
+                    placeholder="Votre prénom"
+                    className="w-full px-4 py-3 rounded-xl border border-border-input bg-white focus:ring-2 focus:ring-primary-dark focus:border-transparent outline-none font-medium text-sm text-gray-800"
+                  />
+                  <input
+                    type="text"
+                    value={reviewCity}
+                    onChange={(e) => setReviewCity(e.target.value)}
+                    placeholder="Votre ville (optionnel)"
+                    className="w-full px-4 py-3 rounded-xl border border-border-input bg-white focus:ring-2 focus:ring-primary-dark focus:border-transparent outline-none font-medium text-sm text-gray-800"
+                  />
+                </div>
+                <textarea
+                  required
+                  rows={3}
+                  value={reviewMessage}
+                  onChange={(e) => setReviewMessage(e.target.value)}
+                  placeholder="Dites-nous ce que vous avez pensé de Yolita..."
+                  className="w-full px-4 py-3 rounded-xl border border-border-input bg-white focus:ring-2 focus:ring-primary-dark focus:border-transparent outline-none resize-none font-medium text-sm text-gray-800"
+                ></textarea>
+                {reviewError && (
+                  <p className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3">
+                    ⚠️ {reviewError}
+                  </p>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowReviewForm(false)}
+                    className="flex-1 text-xs font-black uppercase tracking-widest text-gray-500 border border-gray-200 rounded-xl py-3"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={reviewSubmitting}
+                    className="flex-1 bg-primary-dark text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
+                  >
+                    {reviewSubmitting ? 'Envoi...' : 'Envoyer mon avis'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="text-center">
+                <p className="text-sm font-bold text-gray-700 mb-4">
+                  Vous avez testé Yolita ? Partagez votre avis, aucun compte n'est nécessaire.
+                </p>
+                <button
+                  onClick={() => setShowReviewForm(true)}
+                  className="inline-block bg-primary-dark text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  Laisser un avis
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
